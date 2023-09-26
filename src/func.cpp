@@ -77,15 +77,34 @@ void Func::draw(Graph* G, cv::Mat* posession) {
     }
     _lines->clear();
 
-
-    double step = G->xpos(1);
-    double f1, f2;
+    double x1, x2, f1, f2;
     Line* newLine;
-    for (double i = xmin; i <= xmax - step; i += step) {
-        f1 = (*_func)(i);
-        f2 = (*_func)(i + step);
-        if ((ymin <= f1 <= ymax && ymin <= f2 <= ymax) || ((ymax < f1 || f1 < ymin) && ymin <= f2 <= ymax) || (ymin <= f1 <= ymax && (ymax < f2 || f2 < ymin))) {
-            newLine = new Line(i, f1, i + step, f2, _sw, _color);
+    int j = (int)(G->jIdx(xmin) + 0.5);
+    while (j <= (int)(G->jIdx(xmax) + 0.5) - 1) {
+        x1 = G->xpos(j);
+        x2 = G->xpos(++j);
+        f1 = (*_func)(x1);
+        f2 = (*_func)(x2);
+        if (ymin <= f1 && f1 <= ymax && ymin <= f2 && f2 <= ymax) {
+            newLine = new Line(x1, f1, x2, f2, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (ymin > f1 && ymin <= f2 && f2 <= ymax) {
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, x2, f2, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (f1 > ymax && ymin <= f2 && f2 <= ymax) {
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, x2, f2, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (ymin <= f1 && f1 <= ymax && ymin > f2) {
+            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (ymin <= f1 && f1 <= ymax && f2 > ymax) {
+            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (ymin > f1 && f2 > ymax) {
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _sw, _color);
+            _lines->push_back(newLine);
+        } else if (f1 > ymax && ymin > f2) {
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _sw, _color);
             _lines->push_back(newLine);
         }
     }

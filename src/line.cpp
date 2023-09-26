@@ -57,10 +57,10 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 	double ymax = yaCvs >= ybCvs ? yaCvs : ybCvs;
 	
 	// determinar os limites da regiao retangular de teste
-	int x1 = xmin - _sw <= 0 ? 0 : (xmin - _sw >= G->yres() ? G->yres() - 1 : (int)(xmin - _sw));
-	int y1 = ymin - _sw <= 0 ? 0 : (ymin - _sw >= G->xres() ? G->xres() - 1 : (int)(ymin - _sw));
-	int x2 = xmax + _sw >= G->yres() ? G->yres() - 1 : (xmax + _sw <= 0 ? 0 : (int)(xmax + _sw));
-	int y2 = ymax + _sw >= G->xres() ? G->xres() - 1 : (ymax + _sw <= 0 ? 0 : (int)(ymax + _sw));
+	int x1 = (int)(xmin - _sw) < 0 ? 0 : ((int)(xmin - _sw) >= G->yres() ? G->yres() - 1 : (int)(xmin - _sw));
+	int y1 = (int)(ymin - _sw) < 0 ? 0 : ((int)(ymin - _sw) >= G->xres() ? G->xres() - 1 : (int)(ymin - _sw));
+	int x2 = (int)(xmax + _sw) + 1 >= G->yres() ? G->yres() - 1 : ((int)(xmax + _sw) + 1 < 0 ? 0 : (int)(xmax + _sw) + 1);
+	int y2 = (int)(ymax + _sw) + 1 >= G->xres() ? G->xres() - 1 : ((int)(ymax + _sw) + 1 < 0 ? 0 : (int)(ymax + _sw) + 1);
 
 	double d;
 	double pp1;

@@ -2,30 +2,30 @@
 #include <iostream>
 
 Graph::Graph() {
-    canvas = cv::Mat(854, 480, CV_8UC3);
+    _canvas = new cv::Mat(854, 480, CV_8UC3);
     _xmin = -5; _xmax = 5;
     _ymin = -5; _ymax = 5;
     _bgColor = {255, 255, 255};
     _drawOrder = new std::list<Drawing*>;
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
 }
 
 Graph::Graph(double xmin, double xmax, double ymin, double ymax, uint xres, uint yres, cv::Vec3b bgColor) {
-    canvas = cv::Mat(yres, xres, CV_8UC3);
+    _canvas = new cv::Mat(yres, xres, CV_8UC3);
     _xmin = xmin; _xmax = xmax;
     _ymin = ymin; _ymax = ymax;
     _bgColor = bgColor;
     _drawOrder = new std::list<Drawing*>;
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
 }
 
 Graph::Graph(double xmin, double xmax, double ymin, double ymax, cv::Vec3b bgColor) {
-    canvas = cv::Mat(854, 480, CV_8UC3);
+    _canvas = new cv::Mat(854, 480, CV_8UC3);
     _xmin = xmin; _xmax = xmax;
     _ymin = ymin; _ymax = ymax;
     _bgColor = bgColor;
     _drawOrder = new std::list<Drawing*>;
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
 }
 
 Graph::~Graph() {
@@ -34,30 +34,30 @@ Graph::~Graph() {
     }
     _drawOrder->clear();
     delete _drawOrder;
-    canvas.~Mat();
+    delete _canvas;
 }
 
 void Graph::setRes(uint xres, uint yres) {
-    canvas.~Mat();
-    canvas = cv::Mat(yres, xres, CV_8UC3);
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    delete _canvas;
+    _canvas = new cv::Mat(yres, xres, CV_8UC3);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {
         (*iter)->draw(this);
     }
 }
 
-uint Graph::xres() {
-    return canvas.cols;
+int Graph::xres() {
+    return _canvas->cols;
 }
 
-uint Graph::yres() {
-    return canvas.rows;
+int Graph::yres() {
+    return _canvas->rows;
 }
 
 void Graph::setRange(double xmin, double xmax, double ymin, double ymax) {
     _xmin = xmin; _xmax = xmax;
     _ymin = ymin; _ymax = ymax;
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {
         (*iter)->draw(this);
     }
@@ -82,7 +82,7 @@ double Graph::ymax() {
 
 void Graph::setBGColor(cv::Vec3b bgColor) {
     _bgColor = bgColor;
-    canvas = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
+    (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {
         (*iter)->draw(this);
     }
@@ -93,23 +93,23 @@ cv::Vec3b Graph::bgColor() {
 }
 
 cv::Vec3b* Graph::at(int i, int j) {
-    return &canvas.at<cv::Vec3b>(i, j);
+    return &(_canvas->at<cv::Vec3b>(i, j));
 }
 
 double Graph::iIdx(double y) {
-    return canvas.rows - 1 - (canvas.rows - 1)/(_ymax - _ymin)*(y - _ymin);
+    return _canvas->rows - 1 - (_canvas->rows - 1)/(_ymax - _ymin)*(y - _ymin);
 }
 
 double Graph::jIdx(double x) {
-    return (canvas.cols - 1)/(_xmax - _xmin)*(x - _xmin);
+    return (_canvas->cols - 1)/(_xmax - _xmin)*(x - _xmin);
 }
 
 double Graph::xpos(double j) {
-    return (_xmax - _xmin)/(canvas.cols - 1)*j + _xmin;
+    return (_xmax - _xmin)/(_canvas->cols - 1)*j + _xmin;
 }
 
 double Graph::ypos(double i) {
-    return -(_ymax - _ymin)/(canvas.rows - 1)*(i - canvas.rows + 1) + _ymin;
+    return -(_ymax - _ymin)/(_canvas->rows - 1)*(i - _canvas->rows + 1) + _ymin;
 }
 
 void Graph::drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color, double sw) {
@@ -151,5 +151,5 @@ void Graph::drawFunc(double (*func)(double), double sw, cv::Vec3b color) {
 }
 
 void Graph::write(const char* filename) {
-    cv::imwrite(filename, canvas);
+    cv::imwrite(filename, (*_canvas));
 }

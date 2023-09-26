@@ -15,7 +15,7 @@ class Graph {
         /**
          * @brief cv::Mat object that contains image data.
          */
-        cv::Mat canvas;
+        cv::Mat* _canvas;
         /**
          * @brief variables that specify the range of R2 values present in this->canvas (private).
          */
@@ -76,13 +76,13 @@ class Graph {
          * 
          * @return unsigned int
          */
-        uint xres();
+        int xres();
         /**
          * @brief returns the vertical length of the image.
          * 
          * @return unsigned int
          */
-        uint yres();
+        int yres();
 
         //functions pertaining to range of what is being shown on the graph
         /**
