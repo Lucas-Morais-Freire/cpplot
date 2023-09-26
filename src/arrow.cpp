@@ -1,4 +1,6 @@
 #include "../headers/arrow.hpp"
+#include "../headers/line.hpp"
+#include "../headers/cpplot.hpp"
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -66,7 +68,7 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
     // now we find where the head lines' endpoints will sit in matrix space:
     // normalize the size with respect to arrow size.
     double hsize = _hsize/sqrt((xb - xa)*(xb - xa) + (yb - ya)*(yb - ya));
-
+    
     delete _lBranch;
     _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), _stem->sw(), _stem->color());
     _lBranch->draw(G, posession);

@@ -1,7 +1,7 @@
-#ifndef DRAWING_H
-#define DRAWING_H
+#ifndef CPPLOT_DRAWING_H
+#define CPPLOT_DRAWING_H
 
-#include "cpplot.hpp"
+#include <opencv2/opencv.hpp>
 
 class Graph;
 

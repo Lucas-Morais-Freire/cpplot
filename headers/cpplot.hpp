@@ -1,10 +1,11 @@
 #ifndef CPPLOT_H
 #define CPPLOT_H
 
-#include <opencv2/opencv.hpp>
-#include "drawing.hpp"
-#include "line.hpp"
 #include "arrow.hpp"
+#include "func.hpp"
+#include "line.hpp"
+#include "drawing.hpp"
+#include <opencv2/opencv.hpp>
 
 /**
  * @brief WIP. Plotter for the C++ language.
@@ -223,7 +224,11 @@ class Graph {
          * @param angle angle of the arrow-head strokes in pixels.
          */
         void drawArrow(double xa, double ya, double xb, double yb, double sw, double hsize, double angle = 20);
-
+        
+        //drawFunc and its overloads.
+        void drawFunc(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color = {0,0,0});
+        void drawFunc(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color = {0,0,0});
+        void drawFunc(double (*func)(double), double sw, cv::Vec3b color = {0,0,0});
         /**
          * @brief writes image to the specified path.
          * 

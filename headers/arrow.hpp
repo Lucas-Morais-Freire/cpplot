@@ -1,10 +1,7 @@
-#ifndef ARROW_H
-#define ARROW_H
+#ifndef CPPLOT_ARROW_H
+#define CPPLOT_ARROW_H
 
-#include "cpplot.hpp"
-#include "line.hpp"
-
-class Graph;
+#include "drawing.hpp"
 class Line;
 
 class Arrow : public Drawing {

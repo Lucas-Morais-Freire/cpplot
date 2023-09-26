@@ -32,6 +32,7 @@ Graph::~Graph() {
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {
         delete (*iter);
     }
+    _drawOrder->clear();
     delete _drawOrder;
     canvas.~Mat();
 }
@@ -129,6 +130,24 @@ void Graph::drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b colo
 
 void Graph::drawArrow(double xa, double ya, double xb, double yb, double sw, double hsize, double angle) {
     this->drawArrow(xa, ya, xb, yb, {0, 0, 0}, sw, hsize, angle);
+}
+
+void Graph::drawFunc(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color) {
+    Func* newFunc = new Func(func, xmin, xmax,  ymin,  ymax,  sw, color);
+    newFunc->draw(this);
+    _drawOrder->push_back(newFunc);
+}
+
+void Graph::drawFunc(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color) {
+    Func* newFunc = new Func(func,  xmin,  xmax,  sw, color);
+    newFunc->draw(this);
+    _drawOrder->push_back(newFunc);
+}
+
+void Graph::drawFunc(double (*func)(double), double sw, cv::Vec3b color) {
+    Func* newFunc = new Func(func,  sw, color);
+    newFunc->draw(this);
+    _drawOrder->push_back(newFunc);
 }
 
 void Graph::write(const char* filename) {

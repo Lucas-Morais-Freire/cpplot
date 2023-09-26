@@ -1,4 +1,5 @@
 #include "../headers/line.hpp"
+#include "../headers/cpplot.hpp"
 #include <iostream>
 
 Line::Line() {
@@ -56,10 +57,10 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 	double ymax = yaCvs >= ybCvs ? yaCvs : ybCvs;
 	
 	// determinar os limites da regiao retangular de teste
-	int x1 = xmin - _sw < 0 ? 0 : (xmin - _sw >= G->yres() ? G->yres() - 1 : (int)(xmin - _sw));
-	int y1 = ymin - _sw < 0 ? 0 : (ymin - _sw >= G->xres() ? G->xres() - 1 : (int)(ymin - _sw));
-	int x2 = xmax + _sw >= G->yres() ? G->yres() - 1 : (xmax + _sw < 0 ? 0 : (int)(xmax + _sw) + 1);
-	int y2 = ymax + _sw >= G->xres() ? G->xres() - 1 : (ymax + _sw < 0 ? 0 : (int)(ymax + _sw) + 1);
+	int x1 = xmin - _sw <= 0 ? 0 : (xmin - _sw >= G->yres() ? G->yres() - 1 : (int)(xmin - _sw));
+	int y1 = ymin - _sw <= 0 ? 0 : (ymin - _sw >= G->xres() ? G->xres() - 1 : (int)(ymin - _sw));
+	int x2 = xmax + _sw >= G->yres() ? G->yres() - 1 : (xmax + _sw <= 0 ? 0 : (int)(xmax + _sw));
+	int y2 = ymax + _sw >= G->xres() ? G->xres() - 1 : (ymax + _sw <= 0 ? 0 : (int)(ymax + _sw));
 
 	double d;
 	double pp1;
@@ -87,8 +88,8 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 						posession->at<uchar>(i, j) = 1;
 					} else if (posession->at<uchar>(i, j) == 1) {
 						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0] + G->at(i,j)->operator[](0))/2);
-						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[0] + G->at(i,j)->operator[](1))/2);
-						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[0] + G->at(i,j)->operator[](2))/2);
+						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1] + G->at(i,j)->operator[](1))/2);
+						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2] + G->at(i,j)->operator[](2))/2);
 					}
 				}
 			} else {
@@ -109,8 +110,8 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 						posession->at<uchar>(i, j) = 1;
 					} else if (posession->at<uchar>(i, j) == 1) {
 						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0] + G->at(i,j)->operator[](0))/2);
-						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[0] + G->at(i,j)->operator[](1))/2);
-						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[0] + G->at(i,j)->operator[](2))/2);
+						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1] + G->at(i,j)->operator[](1))/2);
+						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2] + G->at(i,j)->operator[](2))/2);
 					}
 				}
 			}

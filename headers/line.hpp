@@ -1,7 +1,6 @@
-#ifndef LINE_H
-#define LINE_H
+#ifndef CPPLOT_LINE_H
+#define CPPLOT_LINE_H
 
-#include "cpplot.hpp"
 #include "drawing.hpp"
 
 class Line : public Drawing {
