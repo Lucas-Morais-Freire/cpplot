@@ -28,6 +28,11 @@ class Graph {
          * @brief list of objects drawn on this->canvas (private).
          */
         std::list<Drawing*>* _drawOrder;
+
+        std::list<std::string> _keys = {"xres", "yres"};
+
+        void init(const char* params);
+        void assign(std::string key, std::string arg);
     public:
         //constructors
         /**
@@ -46,7 +51,7 @@ class Graph {
          * @param yres vertical length of the image in pixels
          * @param bgColor background color.
          */
-        Graph(double xmin, double xmax, double ymin, double ymax, uint xres, uint yres, cv::Vec3b bgColor = {255,255,255});
+        Graph(double xmin, double xmax, double ymin, double ymax, cv::Vec3b bgColor = {255,255,255});
         /**
          * @brief Construct a new Graph object. Not specifying a resolution will instantiate a 854x480 px canvas.
          * 
@@ -56,7 +61,7 @@ class Graph {
          * @param ymax image will only display y values less than this.
          * @param bgColor cv::Vec3b object containing color values for the background in BGR format.
          */
-        Graph(double xmin, double xmax, double ymin, double ymax, cv::Vec3b bgColor = {255,255,255});
+        Graph(double xmin, double xmax, double ymin, double ymax, const char* params, cv::Vec3b bgColor = {255,255,255});
         /**
          * @brief Destroy the Graph object.
          * 

@@ -1,6 +1,7 @@
 #include "../headers/arrow.hpp"
 #include "../headers/line.hpp"
 #include "../headers/cpplot.hpp"
+#include <iostream>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -49,6 +50,11 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
         return;
     } else if (posession->type() != CV_8U) {
         std::cout << "matrix type not compatible. it should be CV_8U\n";
+        return;
+    }
+
+    if (_hsize < 0) {
+        std::cout << "arrow's head size can't be negative. Unable to draw.\n";
         return;
     }
 
