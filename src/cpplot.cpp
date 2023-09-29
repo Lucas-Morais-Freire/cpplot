@@ -7,9 +7,9 @@ void Graph::init(const char* params) {
     std::string s = params;
     std::list<std::string> keys = _keys;
     std::list<std::string> done;
-    std::regex pattern("( *\\w+ *= *([0-9]|\\.|[a-z]|[A-Z])+ *,)*( *\\w+ *= *([0-9]|\\.|[a-z]|[A-Z])+ *)");
+    std::regex pattern("( *\\w+ *= *([0-9]|\\.|\\-|[a-z]|[A-Z])+ *,)*( *\\w+ *= *([0-9]|\\.|\\-|[a-z]|[A-Z])+ *)");
     std::regex key_matches("\\w+ *=");
-    std::regex arg_matches("= *([0-9]|\\.|[a-z]|[A-Z])+");
+    std::regex arg_matches("= *([0-9]|\\.|\\-|[a-z]|[A-Z])+");
     if (std::regex_match(s, pattern)) { // if the parameter string matches the regex...
         // ...we will check for all keys that were given.
         std::sregex_iterator key_match_iter(s.begin(), s.end(), key_matches);
@@ -37,7 +37,7 @@ void Graph::init(const char* params) {
                 assign(key, arg);
                 // erase that key from the list so that we don't re-assign any values to it.
                 keys.erase(keys_list_iter);
-            } else {
+            } else { // if its not a valid key, signal it to the user.
                 std::cout << "\"" << key << "\" is not a valid key for this object or you have repeated it. valid keys are: ";
                 std::list<std::string>::iterator last = _keys.end();
                 last--;
@@ -55,11 +55,34 @@ void Graph::init(const char* params) {
 }
 
 void Graph::assign(std::string key, std::string arg) {
-    std::cout << "assigning \"" << arg << "\" to \"" << key << "\"\n";
+    std::regex int_pattern("0|-?[1-9][0-9]*");
+    if (std::regex_match(arg, int_pattern)) {
+        if (key == "xres") {
+            if (std::stoi(arg) < 0) {
+                std::cout << arg << " can't be negative\n";
+                return;
+            }
+            _xres = std::stoi(arg);
+            return;
+        } else if (key == "yres") {
+            if (std::stoi(arg) < 0) {
+                std::cout << arg << " can't be negative\n";
+                return;
+            }
+            _yres = std::stoi(arg);
+            return;
+        }
+    } else {
+        std::cout << "argument \"" << arg << "\" is not a valid integer literal.\n";
+        return;
+    }
 }
 
 Graph::Graph() {
-    _canvas = new cv::Mat(854, 480, CV_8UC3);
+    // first, those variables who are keyword arguments:  
+    _xres = 854; _yres = 480;
+    // then, the proper variables:
+    _canvas = new cv::Mat(_yres, _xres, CV_8UC3);
     _xmin = -5; _xmax = 5;
     _ymin = -5; _ymax = 5;
     _bgColor = {255, 255, 255};
@@ -68,7 +91,10 @@ Graph::Graph() {
 }
 
 Graph::Graph(double xmin, double xmax, double ymin, double ymax, cv::Vec3b bgColor) {
-    _canvas = new cv::Mat(854, 480, CV_8UC3);
+    // first, those variables who are keyword arguments:  
+    _xres = 854; _yres = 480;
+    // then, the proper variables:
+    _canvas = new cv::Mat(480, 854, CV_8UC3);
     _xmin = xmin; _xmax = xmax;
     _ymin = ymin; _ymax = ymax;
     _bgColor = bgColor;
@@ -77,13 +103,16 @@ Graph::Graph(double xmin, double xmax, double ymin, double ymax, cv::Vec3b bgCol
 }
 
 Graph::Graph(double xmin, double xmax, double ymin, double ymax, const char* params, cv::Vec3b bgColor) {
-    _canvas = new cv::Mat(854, 480, CV_8UC3);
+    // first, those variables who are keyword arguments:  
+    _xres = 854; _yres = 480;
+    init(params);
+    // then, the proper variables:
+    _canvas = new cv::Mat(_yres, _xres, CV_8UC3);
     _xmin = xmin; _xmax = xmax;
     _ymin = ymin; _ymax = ymax;
     _bgColor = bgColor;
     _drawOrder = new std::list<Drawing*>;
     (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
-    init(params);
 }
 
 Graph::~Graph() {
@@ -95,9 +124,14 @@ Graph::~Graph() {
     delete _canvas;
 }
 
-void Graph::setRes(uint xres, uint yres) {
+void Graph::setRes(int xres, int yres) {
+    if (xres < 0 || yres < 0) {
+        std::cout << "negative resolution values are not allowed\n";
+        return;
+    }
+    _xres = xres; _yres = yres;
     delete _canvas;
-    _canvas = new cv::Mat(yres, xres, CV_8UC3);
+    _canvas = new cv::Mat(_yres, _xres, CV_8UC3);
     (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {
         (*iter)->draw(this);
@@ -170,42 +204,34 @@ double Graph::ypos(double i) {
     return -(_ymax - _ymin)/(_canvas->rows - 1)*(i - _canvas->rows + 1) + _ymin;
 }
 
-void Graph::drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color, double sw) {
-    Line* newLine = new Line(xa, ya, xb, yb, sw, color);
+void Graph::drawLine(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+    Line* newLine = new Line(xa, ya, xb, yb, params, color);
     newLine->draw(this);
     _drawOrder->push_back(newLine);
 }
 
-void Graph::drawLine(double xa, double ya, double xb, double yb, double sw) {
-    this->drawLine(xa, ya, xb, yb, {0,0,0}, sw);
+void Graph::drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color) {
+    this->drawLine(xa, ya, xb, yb, "", color);
 }
 
-void Graph::drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color, double sw, double hsize, double angle) {
-    Arrow* newArrow = new Arrow(xa, ya, xb, yb, sw, hsize, color);
+void Graph::drawArrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+    Arrow* newArrow = new Arrow(xa, ya, xb, yb, params, color);
     newArrow->draw(this);
     _drawOrder->push_back(newArrow);
 }
 
-void Graph::drawArrow(double xa, double ya, double xb, double yb, double sw, double hsize, double angle) {
-    this->drawArrow(xa, ya, xb, yb, {0, 0, 0}, sw, hsize, angle);
+void Graph::drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color) {
+    this->drawArrow(xa, ya, xb, yb, "", color);
 }
 
-void Graph::drawFunc(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color) {
-    Func* newFunc = new Func(func, xmin, xmax,  ymin,  ymax,  sw, color);
+void Graph::drawFunc(double (*func)(double), std::string params, cv::Vec3b color) {
+    Func* newFunc = new Func(func, params, color);
     newFunc->draw(this);
     _drawOrder->push_back(newFunc);
 }
 
-void Graph::drawFunc(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color) {
-    Func* newFunc = new Func(func,  xmin,  xmax,  sw, color);
-    newFunc->draw(this);
-    _drawOrder->push_back(newFunc);
-}
-
-void Graph::drawFunc(double (*func)(double), double sw, cv::Vec3b color) {
-    Func* newFunc = new Func(func,  sw, color);
-    newFunc->draw(this);
-    _drawOrder->push_back(newFunc);
+void Graph::drawFunc(double (*func)(double), cv::Vec3b color) {
+    this->drawFunc(func, "", color);
 }
 
 void Graph::write(const char* filename) {

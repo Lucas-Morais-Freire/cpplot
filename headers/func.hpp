@@ -4,17 +4,26 @@
 #include "drawing.hpp"
 class Line;
 
+double cpl_default(double x);
+
 class Func : public Drawing {
     protected:
-        double (*_func)(double);
-        double _xmin, _xmax, _ymin, _ymax;
-        double _sw;
-        std::list<Line*>* _lines;
+        // obligatory attributes:
+            // dynamic:
+                std::list<Line*>* _lines;
+            // standard:
+                double (*_func)(double);
+
+        // optional attributes:
+            // standard
+                double _stroke_weight;
+                double _xmin, _xmax, _ymin, _ymax;
+
+        void assign(std::string key, std::string arg);
     public:
-        Func();
-        Func(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color = {0,0,0});
-        Func(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color = {0,0,0});
-        Func(double (*func)(double), double sw, cv::Vec3b color = {0,0,0});
+        Func() : Func(cpl_default, ""){};
+        Func(double (*func)(double), cv::Vec3b color = {0,0,0}) : Func(func, "", color){};
+        Func(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
         ~Func();
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* posession);

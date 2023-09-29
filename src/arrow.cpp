@@ -2,37 +2,75 @@
 #include "../headers/line.hpp"
 #include "../headers/cpplot.hpp"
 #include <iostream>
+#include <regex>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-Arrow::Arrow() {
-    _stem = new Line;
-    _lBranch = new Line;
-    _rBranch = new Line;
-    _hsize = _angle = 0;
+void Arrow::assign(std::string key, std::string arg) {
+    std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
+	if (std::regex_match(arg, double_pattern)) {
+		if (key == "stroke_weight") {
+			if (std::stod(arg) < 0) {
+				std::cout << key << "can't be negative.\n";
+				return;
+			}
+			_stem = new Line(_xa, _ya, _xb, _yb, key + " = " + arg, _color);
+			return;
+		} else if (key == "angle") {
+            _angle = M_PI/180*std::stod(arg);
+            return;
+        } else if (key == "head_size") {
+            if (std::stod(arg) < 0) {
+				std::cout << key << "can't be negative.\n";
+				return;
+			}
+            _head_size = std::stod(arg);
+            return;
+        }
+	} else {
+		std::cout << "argument \"" << arg << "\" is not a valid double literal.\n";
+	}
 }
 
-Arrow::Arrow(double xa, double ya, double xb, double yb, double sw, double hsize, double angle, cv::Vec3b color) {
-    _stem = new Line(xa, ya, xb, yb, sw, color);
-    _lBranch = new Line;
-    _rBranch = new Line;
-    _angle = M_PI/180*angle;
-    _hsize = hsize;
-}
-
-Arrow::Arrow(double xa, double ya, double xb, double yb, double sw, double hsize, cv::Vec3b color) {
-    _stem = new Line(xa, ya, xb, yb, sw, color);
-    _lBranch = new Line;
-    _rBranch = new Line;
-    _angle = M_PI/9;
-    _hsize = hsize;
+Arrow::Arrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+    // initialize obligatory values:
+        // dynamic:
+            _lBranch = NULL;
+            _rBranch = NULL;
+        // standard:
+            _xa = xa; _ya = ya; _xb = xb; _yb = yb;
+            _color = color;
+    
+    // Arrow has these optional parameters:
+    _keys = {
+        "angle",
+        "stroke_weight",
+        "head_size"
+    };
+    // initialize optional parameters with given string:
+    std::list<std::string>* keys = init(params);
+    // if some values were not assigned, assign their default values:
+	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
+		if ((*iter) == "angle") {
+            _angle = M_PI/9;
+		} else if ((*iter) == "stroke_weight") {
+			_stem = new Line(_xa, _ya, _xb, _yb, _color);
+        } else if ((*iter) == "head_size") {
+            _head_size = 20;
+        }
+	}
+	delete keys;
 }
 
 Arrow::~Arrow() {
     delete _stem;
-    delete _rBranch;
-    delete _lBranch;
+    if (_rBranch != NULL) {
+        delete _rBranch;
+    }
+    if (_lBranch != NULL) {
+        delete _lBranch;
+    }
 }
 
 void Arrow::draw(Graph* G) {
@@ -53,7 +91,7 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
         return;
     }
 
-    if (_hsize < 0) {
+    if (_head_size < 0) {
         std::cout << "arrow's head size can't be negative. Unable to draw.\n";
         return;
     }
@@ -73,13 +111,13 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
     double yb = G->jIdx(_stem->xb());
     // now we find where the head lines' endpoints will sit in matrix space:
     // normalize the size with respect to arrow size.
-    double hsize = _hsize/sqrt((xb - xa)*(xb - xa) + (yb - ya)*(yb - ya));
+    double hsize = _head_size/sqrt((xb - xa)*(xb - xa) + (yb - ya)*(yb - ya));
     
     delete _lBranch;
-    _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), _stem->sw(), _stem->color());
+    _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), "stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
     _lBranch->draw(G, posession);
 
     delete _rBranch;
-    _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)), _stem->sw(), _stem->color());
+    _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)),"stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
     _rBranch->draw(G, posession);
 }

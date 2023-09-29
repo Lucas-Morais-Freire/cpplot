@@ -17,7 +17,7 @@ class Graph {
          */
         cv::Mat* _canvas;
         /**
-         * @brief variables that specify the range of R2 values present in this->canvas (private).
+         * @brief variables that specify the range of R2 values present in _canvas (protected).
          */
         double _xmin, _xmax, _ymin, _ymax;
         /**
@@ -25,11 +25,12 @@ class Graph {
          */
         cv::Vec3b _bgColor;
         /**
-         * @brief list of objects drawn on this->canvas (private).
+         * @brief list of objects drawn on _canvas (protected).
          */
         std::list<Drawing*>* _drawOrder;
 
         std::list<std::string> _keys = {"xres", "yres"};
+         int _xres, _yres;
 
         void init(const char* params);
         void assign(std::string key, std::string arg);
@@ -75,7 +76,7 @@ class Graph {
          * @param xres horizontal length of the image in pixels.
          * @param yres vertical length of the image in pixels
          */
-        void setRes(uint xres, uint yres);
+        void setRes(int xres, int yres);
         /**
          * @brief returns the horizontal length of the image.
          * 
@@ -180,60 +181,17 @@ class Graph {
         cv::Vec3b* at(int i, int j);
 
         //drawLine and its overloads.
-        /**
-         * @brief draws a line between the endpoints (xa, ya) and (xb, yb) in R2 space.
-         * 
-         * @param xa x coordinate of the first endpoint.
-         * @param ya y coordinate of the first endpoint.
-         * @param xb x coordinate of the second endpoint.
-         * @param yb y coordinate of the second endpoint.
-         * @param color color of the line.
-         * @param sw half-thickness of the line in pixels.
-         */
-        void drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color, double sw);
-        /**
-         * @brief draws a line between the endpoints (xa, ya) and (xb, yb) in R2 space. An unspecified color will draw a black line.
-         * 
-         * @param xa x coordinate of the first endpoint.
-         * @param ya y coordinate of the first endpoint.
-         * @param xb x coordinate of the second endpoint.
-         * @param yb y coordinate of the second endpoint.
-         * @param sw half-thickness of the line in pixels.
-         */
-        void drawLine(double xa, double ya, double xb, double yb, double sw);
+
+        void drawLine(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0,0,0});
+        void drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0});
 
         //drawArrow and its overloads.
-        /**
-         * @brief draws an arrow between the endpoints (xa, ya) and (xb, yb) in R2 space.
-         * 
-         * @param xa x coordinate of the first endpoint.
-         * @param ya y coordinate of the first endpoint.
-         * @param xb x coordinate of the second endpoint.
-         * @param yb y coordinate of the second endpoint.
-         * @param color color of the lines.
-         * @param sw half-thickness of the lines in pixels.
-         * @param hsize size of the arrow-head in pixels.
-         * @param angle angle of the arrow-head strokes in pixels.
-         */
-        void drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color, double sw, double hsize, double angle);
-        /**
-         * @brief draws an arrow between the endpoints (xa, ya) and (xb, yb) in R2 space. An unspecified color will draw a black line.
-         * and a unspecified angle will default to 20 degrees.
-         * 
-         * @param xa x coordinate of the first endpoint.
-         * @param ya y coordinate of the first endpoint.
-         * @param xb x coordinate of the second endpoint.
-         * @param yb y coordinate of the second endpoint.
-         * @param sw half-thickness of the lines in pixels.
-         * @param hsize size of the arrow-head in pixels.
-         * @param angle angle of the arrow-head strokes in pixels.
-         */
-        void drawArrow(double xa, double ya, double xb, double yb, double sw, double hsize, double angle = 20);
+        void drawArrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0,0,0});
+        void drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0});
         
         //drawFunc and its overloads.
-        void drawFunc(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color = {0,0,0});
-        void drawFunc(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color = {0,0,0});
-        void drawFunc(double (*func)(double), double sw, cv::Vec3b color = {0,0,0});
+        void drawFunc(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
+        void drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
         /**
          * @brief writes image to the specified path.
          * 

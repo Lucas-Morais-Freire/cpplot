@@ -1,44 +1,73 @@
 #include "../headers/func.hpp"
 #include "../headers/cpplot.hpp"
+#include <regex>
 
-double cpplot_default(double x) {
+double cpl_default(double x) {
     return 0;
 }
 
-Func::Func() {
-    _func = cpplot_default;
-    _xmin = _ymin = -HUGE_VAL;
-    _xmax = _ymax = HUGE_VAL;
-    _sw = 0;
-    _color = {0,0,0};
-    _lines = new std::list<Line*>;
+void Func::assign(std::string key, std::string arg) {
+    std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
+    if (std::regex_match(arg, double_pattern)) {
+        if (key == "stroke_weight") {
+            if (std::stod(arg) < 0) {
+                std::cout << "stroke_weight can't be a negative value.\n";
+                return;
+            }
+            _stroke_weight = std::stod(arg);
+            return;
+        } else if (key == "xmin") {
+            _xmin = std::stod(arg);
+            return;
+        } else if (key == "xmax") {
+            _xmax = std::stod(arg);
+            return;
+        } else if (key == "ymin") {
+            _ymin = std::stod(arg);
+            return;
+        } else if (key == "ymax") {
+            _ymax = std::stod(arg);
+            return;
+        }
+    } else {
+		std::cout << "argument \"" << arg << "\" is not a valid double literal.\n";
+        return;
+	}
 }
 
-Func::Func(double (*func)(double), double xmin, double xmax, double ymin, double ymax, double sw, cv::Vec3b color) {
-    _func = func;
-    _xmin = xmin; _xmax = xmax;
-    _ymin = ymin; _ymax = ymax;
-    _sw = sw;
-    _color = color;
-    _lines = new std::list<Line*>;
-}
-
-Func::Func(double (*func)(double), double xmin, double xmax, double sw, cv::Vec3b color) {
-    _func = func;
-    _xmin = xmin; _xmax = xmax;
-    _ymin = -HUGE_VAL; _ymax = HUGE_VAL;
-    _sw = sw;
-    _color = color;
-    _lines = new std::list<Line*>;
-}
-
-Func::Func(double (*func)(double), double sw, cv::Vec3b color) {
-    _func = func;
-    _xmin = _ymin = -HUGE_VAL;
-    _xmax = _ymax = HUGE_VAL;
-    _sw = sw;
-    _color = color;
-    _lines = new std::list<Line*>;
+Func::Func(double (*func)(double), std::string params, cv::Vec3b color) {
+    // initialize obligatory values:
+        // dynamic:
+            _lines = new std::list<Line*>;
+        // standard:
+            _func = func;
+            _color = color;
+    
+    // Func has these optional parameters:
+    _keys = {
+        "stroke_weight",
+        "xmin",
+        "xmax",
+        "ymin",
+        "ymax"
+    };
+    // initialize optional parameters with given string:
+    std::list<std::string>* keys = init(params);
+    // if some values were not assigned, assign their default values:
+	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
+		if ((*iter) == "stroke_weight") {
+            _stroke_weight = 2;
+        } else if ((*iter) == "xmin") {
+            _xmin = -HUGE_VAL;
+        } else if ((*iter) == "xmax") {
+            _xmax = HUGE_VAL;
+        } else if ((*iter) == "ymin") {
+            _ymin = -HUGE_VAL;
+        } else if ((*iter) == "ymax") {
+            _ymax = HUGE_VAL;
+        }
+	}
+	delete keys;
 }
 
 Func::~Func() {
@@ -86,25 +115,25 @@ void Func::draw(Graph* G, cv::Mat* posession) {
         f1 = (*_func)(x1);
         f2 = (*_func)(x2);
         if (ymin <= f1 && f1 <= ymax && ymin <= f2 && f2 <= ymax) {
-            newLine = new Line(x1, f1, x2, f2, _sw, _color);
+            newLine = new Line(x1, f1, x2, f2, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (ymin > f1 && ymin <= f2 && f2 <= ymax) {
-            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, x2, f2, _sw, _color);
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, x2, f2, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (f1 > ymax && ymin <= f2 && f2 <= ymax) {
-            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, x2, f2, _sw, _color);
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, x2, f2, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (ymin <= f1 && f1 <= ymax && ymin > f2) {
-            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _sw, _color);
+            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (ymin <= f1 && f1 <= ymax && f2 > ymax) {
-            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _sw, _color);
+            newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (ymin > f1 && f2 > ymax) {
-            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _sw, _color);
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         } else if (f1 > ymax && ymin > f2) {
-            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _sw, _color);
+            newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);
         }
     }

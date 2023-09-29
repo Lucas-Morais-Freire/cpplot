@@ -3,6 +3,7 @@ find_package(OpenCV REQUIRED)
 
 add_library(cpplot
 	src/cpplot.cpp
+	src/drawing.cpp
 	src/line.cpp
 	src/arrow.cpp
 	src/func.cpp

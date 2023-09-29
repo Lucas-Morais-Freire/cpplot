@@ -1,19 +1,46 @@
 #include "../headers/line.hpp"
 #include "../headers/cpplot.hpp"
 #include <iostream>
+#include <regex>
 
-Line::Line() {
-    _xa = 0; _ya = 0; _xb = 0; _yb = 0; _sw = 0;
-    _color = {255, 255, 255};
+void Line::assign(std::string key, std::string arg) {
+	std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
+	if (std::regex_match(arg, double_pattern)) {
+		if (key == "stroke_weight") {
+			if (std::stod(arg) < 0) {
+				std::cout << arg << "can't be negative.\n";
+				return;
+			}
+			_stroke_weight = std::stod(arg);
+			return;
+		}
+	} else {
+		std::cout << "argument \"" << arg << "\" is not a valid double literal.\n";
+	}
 }
 
-Line::Line(double xa, double ya, double xb, double yb, double sw, cv::Vec3b color) {
-    _xa = xa;
-    _ya = ya;
-    _xb = xb;
-    _yb = yb;
-    _sw = sw;
-    _color = color;
+Line::Line(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+	// initialize obligatory values:
+	// standard:
+		_xa = xa;
+		_ya = ya;
+		_xb = xb;
+		_yb = yb;
+		_color = color;
+
+	// Line has these optional parameters:
+	_keys = {
+		"stroke_weight"
+	};
+	// initialize optional parameters with given string:
+	std::list<std::string>* keys = init(params);
+	// if some values were not assigned, assign their default values:
+	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
+		if ((*iter) == "stroke_weight") {
+			_stroke_weight = 0.5;
+		}
+	}
+	delete keys;
 }
 
 void Line::draw(Graph* G) {
@@ -57,10 +84,10 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 	double ymax = yaCvs >= ybCvs ? yaCvs : ybCvs;
 	
 	// determinar os limites da regiao retangular de teste
-	int x1 = (int)(xmin - _sw) < 0 ? 0 : ((int)(xmin - _sw) >= G->yres() ? G->yres() - 1 : (int)(xmin - _sw));
-	int y1 = (int)(ymin - _sw) < 0 ? 0 : ((int)(ymin - _sw) >= G->xres() ? G->xres() - 1 : (int)(ymin - _sw));
-	int x2 = (int)(xmax + _sw) + 1 >= G->yres() ? G->yres() - 1 : ((int)(xmax + _sw) + 1 < 0 ? 0 : (int)(xmax + _sw) + 1);
-	int y2 = (int)(ymax + _sw) + 1 >= G->xres() ? G->xres() - 1 : ((int)(ymax + _sw) + 1 < 0 ? 0 : (int)(ymax + _sw) + 1);
+	int x1 = (int)(xmin - _stroke_weight) < 0 ? 0 : ((int)(xmin - _stroke_weight) >= G->yres() ? G->yres() - 1 : (int)(xmin - _stroke_weight));
+	int y1 = (int)(ymin - _stroke_weight) < 0 ? 0 : ((int)(ymin - _stroke_weight) >= G->xres() ? G->xres() - 1 : (int)(ymin - _stroke_weight));
+	int x2 = (int)(xmax + _stroke_weight) + 1 >= G->yres() ? G->yres() - 1 : ((int)(xmax + _stroke_weight) + 1 < 0 ? 0 : (int)(xmax + _stroke_weight) + 1);
+	int y2 = (int)(ymax + _stroke_weight) + 1 >= G->xres() ? G->xres() - 1 : ((int)(ymax + _stroke_weight) + 1 < 0 ? 0 : (int)(ymax + _stroke_weight) + 1);
 
 	double d;
 	double pp1;
@@ -75,21 +102,21 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 				// se sim, calcular a distancia deste ponto ate a reta. baseado nessa distancia, colorir o pixel com esta cor.
 				// d = ||(P2 - P1) x (P - P1)||/||(P2 - P1)||.
 				d = abs((xbCvs - xaCvs)*(j - yaCvs) - (i - xaCvs)*(ybCvs - yaCvs))/sqrt((xbCvs - xaCvs)*(xbCvs - xaCvs) + (ybCvs - yaCvs)*(ybCvs - yaCvs));
-				if (d < _sw) {
+				if (d < _stroke_weight) {
 					// se o ponto estiver dentro da distancia especificada, pintar da cor escolhida.
 					*(G->at(i, j)) = _color;
 					posession->at<uchar>(i, j) = 2;
-				} else if (d < _sw + 1) {
+				} else if (d < _stroke_weight + 1) {
 					// se estiver a ate 1 pixel de distancia, interpolar com a cor de fundo.
 					if (posession->at<uchar>(i, j) == 0) {
-						G->at(i,j)->operator[](0) = (uchar)((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0]);
-						G->at(i,j)->operator[](1) = (uchar)((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1]);
-						G->at(i,j)->operator[](2) = (uchar)((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2]);
+						G->at(i,j)->operator[](0) = (uchar)((G->at(i,j)->operator[](0) - _color[0])*(d - _stroke_weight) + _color[0]);
+						G->at(i,j)->operator[](1) = (uchar)((G->at(i,j)->operator[](1) - _color[1])*(d - _stroke_weight) + _color[1]);
+						G->at(i,j)->operator[](2) = (uchar)((G->at(i,j)->operator[](2) - _color[2])*(d - _stroke_weight) + _color[2]);
 						posession->at<uchar>(i, j) = 1;
 					} else if (posession->at<uchar>(i, j) == 1) {
-						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0] + G->at(i,j)->operator[](0))/2);
-						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1] + G->at(i,j)->operator[](1))/2);
-						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2] + G->at(i,j)->operator[](2))/2);
+						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _stroke_weight) + _color[0] + G->at(i,j)->operator[](0))/2);
+						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _stroke_weight) + _color[1] + G->at(i,j)->operator[](1))/2);
+						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _stroke_weight) + _color[2] + G->at(i,j)->operator[](2))/2);
 					}
 				}
 			} else {
@@ -99,19 +126,19 @@ void Line::draw(Graph* G, cv::Mat* posession) {
 				} else { // se nao, esta mais proximo de P2.
 					d = sqrt((xbCvs - i)*(xbCvs - i) + (ybCvs - j)*(ybCvs - j));
 				}
-				if (d < _sw) { // mesma ideia do caso anterior.
+				if (d < _stroke_weight) { // mesma ideia do caso anterior.
 					*(G->at(i, j)) = _color;
 					posession->at<uchar>(i, j) = 2;
-				} else if (d < _sw + 1) {
+				} else if (d < _stroke_weight + 1) {
 					if (posession->at<uchar>(i, j) == 0) {
-						G->at(i,j)->operator[](0) = (uchar)((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0]);
-						G->at(i,j)->operator[](1) = (uchar)((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1]);
-						G->at(i,j)->operator[](2) = (uchar)((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2]);
+						G->at(i,j)->operator[](0) = (uchar)((G->at(i,j)->operator[](0) - _color[0])*(d - _stroke_weight) + _color[0]);
+						G->at(i,j)->operator[](1) = (uchar)((G->at(i,j)->operator[](1) - _color[1])*(d - _stroke_weight) + _color[1]);
+						G->at(i,j)->operator[](2) = (uchar)((G->at(i,j)->operator[](2) - _color[2])*(d - _stroke_weight) + _color[2]);
 						posession->at<uchar>(i, j) = 1;
 					} else if (posession->at<uchar>(i, j) == 1) {
-						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _sw) + _color[0] + G->at(i,j)->operator[](0))/2);
-						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _sw) + _color[1] + G->at(i,j)->operator[](1))/2);
-						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _sw) + _color[2] + G->at(i,j)->operator[](2))/2);
+						G->at(i,j)->operator[](0) = (uchar)(((G->at(i,j)->operator[](0) - _color[0])*(d - _stroke_weight) + _color[0] + G->at(i,j)->operator[](0))/2);
+						G->at(i,j)->operator[](1) = (uchar)(((G->at(i,j)->operator[](1) - _color[1])*(d - _stroke_weight) + _color[1] + G->at(i,j)->operator[](1))/2);
+						G->at(i,j)->operator[](2) = (uchar)(((G->at(i,j)->operator[](2) - _color[2])*(d - _stroke_weight) + _color[2] + G->at(i,j)->operator[](2))/2);
 					}
 				}
 			}
@@ -151,12 +178,12 @@ double Line::yb() {
 	return _yb;
 }
 
-void Line::setSw(double sw) {
-	_sw = sw;
+void Line::setStrokeWeight(double sw) {
+	_stroke_weight = sw;
 }
 
-double Line::sw() {
-	return _sw;
+double Line::strokeWeight() {
+	return _stroke_weight;
 }
 
 void Line::setColor(cv::Vec3b color) {
