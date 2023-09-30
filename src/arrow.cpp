@@ -35,12 +35,11 @@ void Arrow::assign(std::string key, std::string arg) {
 
 Arrow::Arrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
     // initialize obligatory values:
-        // dynamic:
-            _lBranch = NULL;
-            _rBranch = NULL;
-        // standard:
-            _xa = xa; _ya = ya; _xb = xb; _yb = yb;
-            _color = color;
+        _xa = xa; _ya = ya; _xb = xb; _yb = yb;
+        _color = color;
+    // initialize dynamic values:
+        _lBranch = NULL;
+        _rBranch = NULL;
     
     // Arrow has these optional parameters:
     _keys = {
@@ -49,7 +48,7 @@ Arrow::Arrow(double xa, double ya, double xb, double yb, std::string params, cv:
         "head_size"
     };
     // initialize optional parameters with given string:
-    std::list<std::string>* keys = init(params);
+    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
     // if some values were not assigned, assign their default values:
 	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
 		if ((*iter) == "angle") {
@@ -65,12 +64,8 @@ Arrow::Arrow(double xa, double ya, double xb, double yb, std::string params, cv:
 
 Arrow::~Arrow() {
     delete _stem;
-    if (_rBranch != NULL) {
-        delete _rBranch;
-    }
-    if (_lBranch != NULL) {
-        delete _lBranch;
-    }
+    delete _rBranch;
+    delete _lBranch;
 }
 
 void Arrow::draw(Graph* G) {
@@ -91,11 +86,6 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
         return;
     }
 
-    if (_head_size < 0) {
-        std::cout << "arrow's head size can't be negative. Unable to draw.\n";
-        return;
-    }
-
     _stem->draw(G, posession);
 
     // head size is measured in pixels and the angle must be absolute. therefore the scale of the graph should not matter to how the arrow
@@ -113,11 +103,15 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
     // normalize the size with respect to arrow size.
     double hsize = _head_size/sqrt((xb - xa)*(xb - xa) + (yb - ya)*(yb - ya));
     
-    delete _lBranch;
-    _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), "stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
-    _lBranch->draw(G, posession);
+    if (_head_size > 0.5) {
+        delete _lBranch;
+        _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), "stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
+        _lBranch->draw(G, posession);
+        
+        delete _rBranch;
+        _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)),"stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
+        _rBranch->draw(G, posession);
+    }
 
-    delete _rBranch;
-    _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)),"stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
-    _rBranch->draw(G, posession);
+    
 }

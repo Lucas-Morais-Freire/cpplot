@@ -6,11 +6,9 @@
 class Line : public Drawing {
     protected:
         // obligatory attributes:
-            // standard:
                 double _xa, _ya, _xb, _yb;
         
         // keyword attributes:
-            // standard:
                 double _stroke_weight;
         
         void assign(std::string key, std::string arg);

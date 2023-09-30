@@ -21,7 +21,6 @@ void Line::assign(std::string key, std::string arg) {
 
 Line::Line(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
 	// initialize obligatory values:
-	// standard:
 		_xa = xa;
 		_ya = ya;
 		_xb = xb;
@@ -33,7 +32,7 @@ Line::Line(double xa, double ya, double xb, double yb, std::string params, cv::V
 		"stroke_weight"
 	};
 	// initialize optional parameters with given string:
-	std::list<std::string>* keys = init(params);
+	std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
 	// if some values were not assigned, assign their default values:
 	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
 		if ((*iter) == "stroke_weight") {

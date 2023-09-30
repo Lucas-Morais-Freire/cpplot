@@ -5,53 +5,47 @@
 class Line;
 class Arrow;
 
-#define CPL_X true
-#define CPL_Y false
-
-#define CPL_FULL_TICK true
-#define CPL_HALF_TICK true
-
-#define CPL_LEFT true
-#define CPL_RIGHT false
-
 class Axis : public Drawing {
     protected:
-        Arrow* _arrow;
-        double _step;
-        bool _style;
-        bool _tick_direction;
-        std::list<Line*>* _ticks;
+    // obligatory attributes:
+        double _xa, _ya, _xb, _yb;
+
+    // dynamic attributes:
+        // keyword-dependant:
+            Arrow* _arrow;
+        // keyword-independant:
+            std::list<Line*>* _ticks;
+
+    // keyword attributes:
+        // all:
+            double _step, _start, _stroke_weight, _xmin, _ymin, _xmax, _ymax, _head_size, _head_angle;
+            bool _full_ticks, _draw_head, _ticks_to_left, _half_ticks;
+        // pattern 2:
+            unsigned char _horizontal_placement, _vertical_placement;
+
+    void assign(std::string key, std::string arg);
     public:
-        Axis();
+        Axis() : Axis(true) {};
+        // pattern 1:
+        Axis(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0}) : Axis(xa, ya, xb, yb, "", color) {};
+        Axis(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0,0,0});
 
-        Axis(double xa, double ya, double xb, double yb, double sw, cv::Vec3b color = {0,0,0}) : Axis() {};
+        // pattern 2:
+        Axis(bool x_axis, cv::Vec3b color = {0,0,0}) : Axis(x_axis, "", color) {};
+        Axis(bool x_axis, std::string params, cv::Vec3b color = {0,0,0});
 
-        Axis(double xa, double ya, double xb, double yb, double step, double sw, cv::Vec3b color = {0,0,0});
+        // pattern 3:
+        Axis(bool x_axis, double position, cv::Vec3b color = {0,0,0}) : Axis(x_axis, position, "", color) {};
+        Axis(bool x_axis, double position, std::string params, cv::Vec3b color = {0,0,0});
 
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double hsize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double hsize, double angle, double sw, cv::Vec3b color = {0,0,0});
-        
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double hsize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(double xa, double ya, double xb, double yb, double step, bool style, double ticksize, bool tick_direction, double hsize, double angle, double sw, cv::Vec3b color = {0,0,0});
+        // pattern 4:
+        Axis(double x, double y, double angle, cv::Vec3b color = {0,0,0}) : Axis(x, y, angle, "", color) {};
+        Axis(double x, double y, double angle, std::string params, cv::Vec3b color = {0,0,0});
 
-        Axis(bool axis, double step, double position, bool style, bool tick_direction, double ticksize, double hsize, double angle, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, bool tick_direction, double ticksize, double hsize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, bool tick_direction, double ticksize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, bool tick_direction, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, double ticksize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, double hsize, double angle, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, double hsize, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, bool style, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double step, double position, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double position, double sw, cv::Vec3b color = {0,0,0});
-        Axis(bool axis, double sw, cv::Vec3b color = {0,0,0});
         ~Axis();
+
+        void draw(Graph* G, cv::Mat* posession);
+        void draw(Graph* G);
 };
 
 #endif

@@ -9,15 +9,14 @@ double cpl_default(double x);
 class Func : public Drawing {
     protected:
         // obligatory attributes:
-            // dynamic:
-                std::list<Line*>* _lines;
-            // standard:
-                double (*_func)(double);
+            double (*_func)(double);
 
-        // optional attributes:
-            // standard
-                double _stroke_weight;
-                double _xmin, _xmax, _ymin, _ymax;
+        // dynamic attributes:
+            std::list<Line*>* _lines;
+
+        // keyword attributes:
+            double _stroke_weight;
+            double _xmin, _xmax, _ymin, _ymax;
 
         void assign(std::string key, std::string arg);
     public:

@@ -5,24 +5,24 @@
 class Line;
 
 class Arrow : public Drawing {
-    protected:
+    protected:        
         //obligatory attributes:
-            // dynamic attributes:
-                Line* _rBranch;
-                Line* _lBranch;
-            // standard:
-                double _xa, _ya, _xb, _yb;
+			double _xa, _ya, _xb, _yb;
+
+        // dynamic attributes:
+			// keyword-independant:
+				Line* _rBranch;
+				Line* _lBranch;
+			// keyword-dependant
+				Line* _stem;
         
         // keyword attributes:
-            // attribute of:
-                Line* _stem;
-            // standard:
-                double _head_size, _angle;
+			double _head_size, _angle;
         
         void assign(std::string key, std::string arg);
     public:
-        Arrow() : Arrow(0, 0, 0, 0){};
-        Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0}) : Arrow(xa, ya, xb, yb, "", color){};
+        Arrow() : Arrow(0, 0, 0, 0) {};
+        Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0}) : Arrow(xa, ya, xb, yb, "", color) {};
         Arrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0, 0, 0});
         ~Arrow();
         void draw(Graph* G);

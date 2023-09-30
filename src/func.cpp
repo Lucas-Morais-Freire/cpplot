@@ -37,11 +37,11 @@ void Func::assign(std::string key, std::string arg) {
 
 Func::Func(double (*func)(double), std::string params, cv::Vec3b color) {
     // initialize obligatory values:
-        // dynamic:
+        _func = func;
+        _color = color;
+
+    // initialize dynamic values:
             _lines = new std::list<Line*>;
-        // standard:
-            _func = func;
-            _color = color;
     
     // Func has these optional parameters:
     _keys = {
@@ -52,7 +52,7 @@ Func::Func(double (*func)(double), std::string params, cv::Vec3b color) {
         "ymax"
     };
     // initialize optional parameters with given string:
-    std::list<std::string>* keys = init(params);
+    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
     // if some values were not assigned, assign their default values:
 	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
 		if ((*iter) == "stroke_weight") {
