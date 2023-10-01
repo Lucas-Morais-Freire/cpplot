@@ -7,16 +7,16 @@
 std::list<std::string>* Drawing::init(std::string params) {
     std::list<std::string>* keys = new std::list<std::string>(_keys);
     std::list<std::string> done;
-    std::regex pattern("( *\\w+ *= *([0-9]|\\.|\\-|[a-z]|[A-Z])+ *,)*( *\\w+ *= *([0-9]|\\.|\\-|[a-z]|[A-Z])+ *)");
+    std::regex pattern("( *\\w+ *= *([0-9]|\\.|\\-|\\w)+ *,)*( *\\w+ *= *([0-9]|\\.|\\-|\\w)+ *)");
     std::regex key_matches("\\w+ *=");
-    std::regex arg_matches("= *([0-9]|\\.|\\-|[a-z]|[A-Z])+");
+    std::regex arg_matches("= *([0-9]|\\.|\\-|\\w)+");
     if (std::regex_match(params, pattern)) { // if the parameter string matches the regex...
         // ...we will check for all keys that were given.
         std::sregex_iterator key_match_iter(params.begin(), params.end(), key_matches);
         std::sregex_iterator key_match_begin = key_match_iter;
         while (key_match_iter != std::sregex_iterator()) {
             // get the position of the character just after the key:
-            size_t pos = key_match_iter->str().find(" ") != std::string::npos ? key_match_iter->str().find(" ") : key_match_iter->str().find("=");
+            int pos = key_match_iter->str().find(" ") != std::string::npos ? key_match_iter->str().find(" ") : key_match_iter->str().find("=");
             // extract only the key's string from the iterator and check if it is a valid key:
             std::string key = key_match_iter->str().substr(0,pos);
             std::list<std::string>::iterator keys_list_iter = std::find(keys->begin(), keys->end(), key);

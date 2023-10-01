@@ -5,6 +5,7 @@
 #include "func.hpp"
 #include "line.hpp"
 #include "drawing.hpp"
+#include "axis.hpp"
 #include <opencv2/opencv.hpp>
 
 /**
@@ -192,6 +193,10 @@ class Graph {
         //drawFunc and its overloads.
         void drawFunc(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
         void drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
+
+        //drawAxis and its overloads.
+        void drawAxis(bool x_axis, std::string params, cv::Vec3b color = {0,0,0});
+        void drawAxis(bool x_axis, cv::Vec3b color = {0,0,0});
         /**
          * @brief writes image to the specified path.
          * 

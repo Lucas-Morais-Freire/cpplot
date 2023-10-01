@@ -234,6 +234,16 @@ void Graph::drawFunc(double (*func)(double), cv::Vec3b color) {
     this->drawFunc(func, "", color);
 }
 
+void Graph::drawAxis(bool x_axis, std::string params, cv::Vec3b color) {
+    Axis* newAxis = new Axis(x_axis, params, color);
+    newAxis->draw(this);
+    _drawOrder->push_back(newAxis);
+}
+
+void Graph::drawAxis(bool x_axis, cv::Vec3b color) {
+    this->drawAxis(x_axis, "", color);
+}
+
 void Graph::write(const char* filename) {
     cv::imwrite(filename, (*_canvas));
 }

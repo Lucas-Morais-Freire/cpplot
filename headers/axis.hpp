@@ -18,7 +18,7 @@ class Axis : public Drawing {
 
     // keyword attributes:
         // all:
-            double _step, _start, _stroke_weight, _xmin, _ymin, _xmax, _ymax, _head_size, _head_angle;
+            double _tick_size, _step, _start, _stroke_weight, _xmin, _ymin, _xmax, _ymax, _head_size, _head_angle;
             bool _full_ticks, _draw_head, _ticks_to_left, _half_ticks;
         // pattern 2:
             unsigned char _horizontal_placement, _vertical_placement;
