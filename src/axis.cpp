@@ -9,7 +9,7 @@
 
 void Axis::assign(std::string key, std::string arg) {
     std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
-    std::regex bool_pattern("true|false|0|1");
+    std::regex bool_pattern("true|false");
 	if (std::regex_match(arg, double_pattern)) {
         if (key == "tick_size") {
             if (std::stod(arg) <= 0) {
@@ -31,14 +31,22 @@ void Axis::assign(std::string key, std::string arg) {
                 return;
             }
             _stroke_weight = std::stod(arg);
-        } else if (key == "xmin") {
-            _xmin = std::stod(arg);
-        } else if (key == "ymin") {
-            _ymin = std::stod(arg);
-        } else if (key == "xmax") {
-            _xmax = std::stod(arg);
-        } else if (key == "ymax") {
-            _ymax = std::stod(arg);
+        } else if (key == "min_re") {
+            _min_re = std::stod(arg);
+        } else if (key == "max_re") {
+            _max_re = std::stod(arg);
+        } else if (key == "min_img") {
+            if (0 > std::stod(arg) || std::stod(arg) > 1) {
+                std::cout << key << " must be between 0 and 1.\n";
+                return;
+            }
+            _min_img = std::stod(arg);
+        } else if (key == "max_img") {
+            if (0 > std::stod(arg) || std::stod(arg) > 1) {
+                std::cout << key << " must be between 0 and 1.\n";
+                return;
+            }
+            _max_img = std::stod(arg);
         } else if (key == "head_size") {
             if (std::stod(arg) < 0) {
                 std::cout << arg << "can't be negative.\n";
@@ -46,139 +54,58 @@ void Axis::assign(std::string key, std::string arg) {
             }
             _head_size = std::stoi(arg);
         } else if (key == "head_angle") {
-            _head_angle = std::stod(arg)*M_PI/180;
+            _head_angle = std::stod(arg);
         }
 	} else if (std::regex_match(arg, bool_pattern)) {
-        if (key == "full_ticks") {
-            if (key == "true" || key == "1") {
+        if (key == "draw_ticks") {
+            if (arg == "true" || arg == "1") {
+                _draw_ticks = true;
+            } else {
+                _draw_ticks = false;
+            }
+        } else if (key == "full_ticks") {
+            if (arg == "true" || arg == "1") {
                 _full_ticks = true;
             } else {
                 _full_ticks = false;
             }
         } else if (key == "draw_head") {
-            if (key == "true" || key == "1") {
+            if (arg == "true" || arg == "1") {
                 _draw_head = true;
             } else {
                 _draw_head = false;
             }
         } else if (key == "ticks_to_left") {
-            if (key == "true" || key == "1") {
+            if (arg == "true" || arg == "1") {
                 _ticks_to_left = true;
             } else {
                 _ticks_to_left = false;
             }
         } else if (key == "half_ticks") {
-            if (key == "true" || key == "1") {
-                _ticks_to_left = true;
+            if (arg == "true" || arg == "1") {
+                _half_ticks = true;
             } else {
-                _ticks_to_left = false;
+                _half_ticks = false;
             }
         }
 	} else {
-        if (key == "horizontal_placement") {
-            if (arg == "bottom") {
-                _horizontal_placement = 0;
-            } else if (arg == "middle_bottom") {
-                _horizontal_placement = 1;
-            } else if (arg == "middle") {
-                _horizontal_placement = 2;
-            } else if (arg == "middle_top") {
-                _horizontal_placement = 3;
-            } else if (arg == "top") {
-                _horizontal_placement = 4;
-            }
-        } else if (key == "vertical_placement") {
-            if (arg == "left") {
-                _vertical_placement = 0;
-            } else if (arg == "middle_left") {
-                _vertical_placement = 1;
-            } else if (arg == "middle") {
-                _vertical_placement = 2;
-            } else if (arg == "middle_right") {
-                _vertical_placement = 3;
-            } else if (arg == "right") {
-                _vertical_placement = 4;
-            }
-        } else {
-		    std::cout << "argument \"" << arg << "\" is not a valid literal for " << key << "\n";
-        }
+        std::cout << "argument \"" << arg << "\" is not a valid literal for " << key << "\n";
     }
 }
 
-Axis::Axis(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+Axis::Axis(bool x_axis, double position, bool relative, std::string params, cv::Vec3b color) {
     // initialize obligatory values:
-        _xa = xa; _ya = ya; _xb = xb; _yb = yb;
+        _x_axis = x_axis;
+        _relative = relative;
+        if (_relative && (position < 0 || position > 1)) {
+            throw std::runtime_error("relative positions should be between 0 and 1.\n");
+        }
+        _position = position;
         _color = color;
     
-    // initialize keyword attributes:
+    // initialize dynamic attributes:
         _ticks = new std::list<Line*>;
         _arrow = NULL;
-
-    // this constructor supports these optional parameters:
-    _keys = {
-        "tick_size",
-        "step",
-        "start",
-        "stroke_weight",
-        "xmin",
-        "ymin",
-        "xmax",
-        "ymax",
-        "head_size",
-        "head_angle",
-        "full_ticks",
-        "draw_head",
-        "ticks_to_left",
-        "half_ticks"
-    };
-     // initialize optional parameters with given string:
-    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
-    // if some values were not assigned, assign their default values:
-    for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
-        if ((*iter) == "tick_size") {
-            _tick_size = -HUGE_VAL; // drawn based on head_size.
-        } else if ((*iter) == "step") {
-            _step = 130;
-        } else if ((*iter) == "start") {
-            _start = -HUGE_VAL;
-        } else if ((*iter) == "stroke_weight") {
-            _stroke_weight = 1;
-        } else if ((*iter) == "xmin") {
-            _xmin = -HUGE_VAL;
-        } else if ((*iter) == "ymin") {
-            _ymin = -HUGE_VAL;
-        } else if ((*iter) == "xmax") {
-            _xmax = HUGE_VAL;
-        } else if ((*iter) == "ymax") {
-            _ymax = HUGE_VAL;
-        } else if ((*iter) == "full_ticks") {
-            _full_ticks = false;
-        } else if ((*iter) == "draw_head") {
-            _draw_head = false;
-        } else if ((*iter) == "ticks_to_left") {
-            _ticks_to_left = true;
-        } else if ((*iter) == "half_ticks") {
-            _half_ticks = true;
-        }else if ((*iter) == "head_size") {
-            _head_size = 20;
-        } else if ((*iter) == "head_angle") {
-            _head_angle = M_PI/9;
-        }
-	}
-	delete keys;
-}
-
-Axis::Axis(bool x_axis, std::string params, cv::Vec3b color) {
-    // initialize obligatory attributes:
-        if (x_axis) {
-            _xa = -HUGE_VAL; _ya = HUGE_VAL; _xb = HUGE_VAL; _yb = HUGE_VAL;
-        } else {
-            _xa = -HUGE_VAL; _ya = -HUGE_VAL; _xb = HUGE_VAL; _yb = -HUGE_VAL;
-        }
-    // initialize keyword attributes:
-        _ticks = new std::list<Line*>;
-        _arrow = NULL;
-        _color = color;
 
     // this constructor supports these optional parameters:
     _keys = {
@@ -186,89 +113,17 @@ Axis::Axis(bool x_axis, std::string params, cv::Vec3b color) {
         "step",//
         "start",//
         "stroke_weight",//
-        "xmin",//
-        "ymin",//
-        "xmax",//
-        "ymax",//
+        "min_re",//
+        "max_re",//
+        "min_img",//
+        "max_img",//
         "head_size",//
         "head_angle",//
+        "draw_ticks",//
         "full_ticks",
-        "draw_head",//
-        "ticks_to_left",//
-        "half_ticks",//
-        "horizontal_placement",//
-        "vertical_placement"//
-    };
-     // initialize optional parameters with given string:
-    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
-    // if some values were not assigned, assign their default values:
-    for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
-		if ((*iter) == "tick_size") {
-            _tick_size = -HUGE_VAL; // drawn based on head_size.
-        } else if ((*iter) == "step") {
-            _step = 130;
-        } else if ((*iter) == "start") {
-            _start = -HUGE_VAL;
-        } else if ((*iter) == "stroke_weight") {
-            _stroke_weight = 1;
-        } else if ((*iter) == "xmin") {
-            _xmin = -HUGE_VAL;
-        } else if ((*iter) == "ymin") {
-            _ymin = -HUGE_VAL;
-        } else if ((*iter) == "xmax") {
-            _xmax = HUGE_VAL;
-        } else if ((*iter) == "ymax") {
-            _ymax = HUGE_VAL;
-        } else if ((*iter) == "full_ticks") {
-            _full_ticks = false;
-        } else if ((*iter) == "draw_head") {
-            _draw_head = false;
-        } else if ((*iter) == "ticks_to_left") {
-            _ticks_to_left = true;
-        } else if ((*iter) == "half_ticks") {
-            _half_ticks = true;
-        }else if ((*iter) == "head_size") {
-            _head_size = 20;
-        } else if ((*iter) == "head_angle") {
-            _head_angle = M_PI/9;
-        } else if ((*iter) == "horizontal_placement") {
-            _horizontal_placement = 0;
-        } else if ((*iter) == "vertical_placement") {
-            _vertical_placement = 0;
-        }
-	}
-	delete keys;
-}
-
-Axis::Axis(bool x_axis, double position, std::string params, cv::Vec3b color) {
-    // initialize obligatory values:
-        if (x_axis) {
-            _xa = position; _ya = -HUGE_VAL; _xb = position; _yb = HUGE_VAL;
-        } else {
-            _xa = -HUGE_VAL; _ya = position; _xb = HUGE_VAL; _yb = position;
-        }
-        _color = color;
-    
-    // initialize keyword attributes:
-        _ticks = new std::list<Line*>;
-        _arrow = NULL;
-
-    // this constructor supports these optional parameters:
-    _keys = {
-        "tick_size",
-        "step",
-        "start",
-        "stroke_weight",
-        "xmin",
-        "ymin",
-        "xmax",
-        "ymax",
-        "head_size",
-        "head_angle",
-        "full_ticks",
-        "draw_head",
         "ticks_to_left",
-        "half_ticks"
+        "half_ticks",
+        "draw_head"//
     };
      // initialize optional parameters with given string:
     std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
@@ -277,19 +132,21 @@ Axis::Axis(bool x_axis, double position, std::string params, cv::Vec3b color) {
 		if ((*iter) == "tick_size") {
             _tick_size = -HUGE_VAL; // drawn based on head_size.
         } else if ((*iter) == "step") {
-            _step = 130;
+            _step = -HUGE_VAL;
         } else if ((*iter) == "start") {
             _start = -HUGE_VAL;
         } else if ((*iter) == "stroke_weight") {
             _stroke_weight = 1;
-        } else if ((*iter) == "xmin") {
-            _xmin = -HUGE_VAL;
-        } else if ((*iter) == "ymin") {
-            _ymin = -HUGE_VAL;
-        } else if ((*iter) == "xmax") {
-            _xmax = HUGE_VAL;
-        } else if ((*iter) == "ymax") {
-            _ymax = HUGE_VAL;
+        } else if ((*iter) == "min_re") {
+            _min_re = -HUGE_VAL;
+        } else if ((*iter) == "max_re") {
+            _max_re = HUGE_VAL;
+        } else if ((*iter) == "min_img") {
+            _min_img = 0;
+        } else if ((*iter) == "max_img") {
+            _max_img = 1;
+        } else if ((*iter) == "draw_ticks") {
+            _draw_ticks = true;
         } else if ((*iter) == "full_ticks") {
             _full_ticks = false;
         } else if ((*iter) == "draw_head") {
@@ -301,72 +158,7 @@ Axis::Axis(bool x_axis, double position, std::string params, cv::Vec3b color) {
         }else if ((*iter) == "head_size") {
             _head_size = 20;
         } else if ((*iter) == "head_angle") {
-            _head_angle = M_PI/9;
-        }
-	}
-	delete keys;
-}
-
-Axis::Axis(double x, double y, double angle, std::string params, cv::Vec3b color) {
-    // initialize obligatory values:
-        _xa = x; _ya = y;
-        _xb = x + 1;
-        _yb = y + tan(angle*M_PI/180);
-    
-    // initialize keyword attributes:
-        _ticks = new std::list<Line*>;
-        _arrow = NULL;
-        _color = color;
-
-    // this constructor supports these optional parameters:
-    _keys = {
-        "tick_size",
-        "step",
-        "start",
-        "stroke_weight",
-        "xmin",
-        "ymin",
-        "xmax",
-        "ymax",
-        "head_size",
-        "head_angle",
-        "full_ticks",
-        "draw_head",
-        "ticks_to_left",
-        "half_ticks"
-    };
-     // initialize optional parameters with given string:
-    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
-    // if some values were not assigned, assign their default values:
-    for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
-		if ((*iter) == "tick_size") {
-            _tick_size = -HUGE_VAL; // drawn based on head_size.
-        } else if ((*iter) == "step") {
-            _step = 130;
-        } else if ((*iter) == "start") {
-            _start = -HUGE_VAL;
-        } else if ((*iter) == "stroke_weight") {
-            _stroke_weight = 1;
-        } else if ((*iter) == "xmin") {
-            _xmin = -HUGE_VAL;
-        } else if ((*iter) == "ymin") {
-            _ymin = -HUGE_VAL;
-        } else if ((*iter) == "xmax") {
-            _xmax = HUGE_VAL;
-        } else if ((*iter) == "ymax") {
-            _ymax = HUGE_VAL;
-        } else if ((*iter) == "full_ticks") {
-            _full_ticks = false;
-        } else if ((*iter) == "draw_head") {
-            _draw_head = false;
-        } else if ((*iter) == "ticks_to_left") {
-            _ticks_to_left = true;
-        } else if ((*iter) == "half_ticks") {
-            _half_ticks = true;
-        }else if ((*iter) == "head_size") {
-            _head_size = 20;
-        } else if ((*iter) == "head_angle") {
-            _head_angle = M_PI/9;
+            _head_angle = 20;
         }
 	}
 	delete keys;
@@ -393,137 +185,227 @@ void Axis::draw(Graph* G, cv::Mat* posession) {
         return;
     }
 
-    double xa, ya, xb, yb;
+    for (std::list<Line*>::iterator iter = _ticks->begin(); iter != _ticks->end(); iter++) {
+        delete (*iter);
+    }
+    _ticks->clear();
 
-    if (_xa == -HUGE_VAL && _ya == HUGE_VAL && _xb == HUGE_VAL && _yb == HUGE_VAL) { // checks if this is an x axis
-        switch (_vertical_placement) {
-            case 0:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(G->yres() - 1 - _stroke_weight - (_draw_head ? _head_size : 0)*sin(_head_angle));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
-                break;
-            case 1:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(0.75*(G->yres() - 1));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
-                break;
-            case 2:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(0.5*(G->yres() - 1));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
-                break;
-            case 3:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(0.25*(G->yres() - 1));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
-                break;
-            case 4:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(_stroke_weight + (_draw_head ? _head_size : 0)*sin(_head_angle));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
-            default:
-                xa = G->xmin() >= _xmin ? G->xmin() : _xmin;
-                ya = G->ypos(G->yres() - 1 - _stroke_weight - (_draw_head ? _head_size : 0)*sin(_head_angle));
-                xb = G->xmax() <= _xmax ? G->xmax() : _xmax;
-                yb = ya;
+    double xi, xf, yi, yf;
+    double min_img, max_img;
+    if (_x_axis) { // checks if this is an x axis
+        min_img = (G->xmax() - G->xmin())*_min_img + G->xmin();
+        max_img = (G->xmax() - G->xmin())*_max_img + G->xmin();
+        xi = min_img < _min_re ? _min_re : min_img;
+        xf = max_img > _max_re ? _max_re : max_img;
+        if (_relative) { // if position is relative
+            yi = yf = (G->ymax() - G->ymin())*_position + G->ymin();
+        } else {
+            yi = yf = _position;
+        }
+    } else {
+        min_img = (G->ymax() - G->ymin())*_min_img + G->ymin();
+        max_img = (G->ymax() - G->ymin())*_max_img + G->ymin();
+        yi = min_img < _min_re ? _min_re : min_img;
+        yf = max_img > _max_re ? _max_re : max_img;
+        if (_relative) {
+            xi = xf = (G->xmax() - G->xmin())*_position + G->xmin();
+        } else {
+            xi = xf = _position;
+        }
+    }
+
+    if (_draw_ticks) {
+        if (_tick_size == -HUGE_VAL) {
+            _tick_size = 0.02*(G->yres() < G->xres() ? G->yres() : G->xres());
         }
 
-        delete _arrow;
-        _arrow = new Arrow(xa, ya, xb, yb, "stroke_weight="+std::to_string(_stroke_weight)+",head_size="+std::to_string(_draw_head ? _head_size : 0)+",angle="+std::to_string(_head_angle), _color);
-
-        if (_start == -HUGE_VAL) {
-            _start = 0.5*(G->xmin() + G->xmax());
+        if (_step == -HUGE_VAL) {
+            _step = 1 << (_x_axis ? (int)(std::log((G->xmax() - G->xmin())/6)) : (int)(std::log((G->ymax() - G->ymin())/6)));
         }
-        if (xa > _start || _start > xb) {
-            std::cout << "starting position should be inside drawing bounds.\n";
-            return;
-        }
-
-        if (_draw_head && _tick_size == -HUGE_VAL) {
-            _tick_size = _head_size*sin(_head_angle);
-        } else if (_tick_size == -HUGE_VAL) {
-            _tick_size = 7.0;
-        }
-
-        for (std::list<Line*>::iterator iter = _ticks->begin(); iter != _ticks->end(); iter++) {
-            delete (*iter);
-        }
-        _ticks->clear();
 
         Line* newTick;
-        if (_full_ticks) {
-            for (int j = (int)(G->jIdx(_start) + 0.5); j < G->xres(); j += (int)(_step + 0.5)) {
-                newTick = new Line(G->xpos(j), ya - G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya + G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
-                _ticks->push_back(newTick);
-            }
-            for (int j = (int)(G->jIdx(_start) + 0.5) - (int)(_step + 0.5); j >= 0; j -= (int)(_step + 0.5)) {
-                newTick = new Line(G->xpos(j), ya - G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya + G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
-                _ticks->push_back(newTick);
-            }
-            
-            if (_half_ticks) {
-                for (int j = (int)(G->jIdx(_start) + 0.5) + ((int)(_step + 0.5) >> 1); j < G->xres(); j += (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya - 0.5*G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya + 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
-                    _ticks->push_back(newTick);
-                }
-                for (int j = (int)(G->jIdx(_start) + 0.5) - ((int)(_step + 0.5) >> 1); j > 0; j -= (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya - 0.5*G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya + 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
-                    _ticks->push_back(newTick);
+        if (_x_axis) {
+            if (_start == -HUGE_VAL) {
+                if (xi > 0) {
+                    _start = ((int)(xi/_step + 1))*_step;
+                } else {
+                    _start = ((int)(xi/_step))*_step;
                 }
             }
-        } else {
-            if (_ticks_to_left) {
-                for (int j = (int)(G->jIdx(_start) + 0.5); j < G->xres(); j += (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya, G->xpos(j), ya + G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+            if (_start < xi || _start > xf) {
+                std::cout << "starting point for ticks can't be outside drawing bounds.\n";
+                return;
+            }
+
+            if (_full_ticks) {
+                for (double x = _start; x <= xf; x += _step) {
+                    newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi - G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
                     _ticks->push_back(newTick);
+                    newTick->draw(G, posession);
                 }
-                for (int j = (int)(G->jIdx(_start) + 0.5) - (int)(_step + 0.5); j >= 0; j -= (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya, G->xpos(j), ya + G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                for (double x = _start - _step; x >= xi; x -= _step) {
+                    newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi - G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
                     _ticks->push_back(newTick);
+                    newTick->draw(G, posession);
                 }
-                
+
                 if (_half_ticks) {
-                    for (int j = (int)(G->jIdx(_start) + 0.5) + ((int)(_step + 0.5) >> 1); j < G->xres(); j += (int)(_step + 0.5)) {
-                        newTick = new Line(G->xpos(j), ya, G->xpos(j), ya + 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                    for (double x = _start + 0.5*_step; x <= xf; x += _step) {
+                        newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
                         _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
                     }
-                    for (int j = (int)(G->jIdx(_start) + 0.5) - ((int)(_step + 0.5) >> 1); j > 0; j -= (int)(_step + 0.5)) {
-                        newTick = new Line(G->xpos(j), ya, G->xpos(j), ya + 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                    for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
+                        newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
                         _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
                     }
                 }
             } else {
-                for (int j = (int)(G->jIdx(_start) + 0.5); j < G->xres(); j += (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya - G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya, "stroke_weight="+std::to_string(_stroke_weight), _color);
-                    _ticks->push_back(newTick);
-                }
-                for (int j = (int)(G->jIdx(_start) + 0.5) - (int)(_step + 0.5); j >= 0; j -= (int)(_step + 0.5)) {
-                    newTick = new Line(G->xpos(j), ya - G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya, "stroke_weight="+std::to_string(_stroke_weight), _color);
-                    _ticks->push_back(newTick);
-                }
-                
-                if (_half_ticks) {
-                    for (int j = (int)(G->jIdx(_start) + 0.5) + ((int)(_step + 0.5) >> 1); j < G->xres(); j += (int)(_step + 0.5)) {
-                        newTick = new Line(G->xpos(j), ya - 0.5*G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                if (_ticks_to_left) {
+                    for (double x = _start; x <= xf; x += _step) {
+                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi, "stroke_weight="+std::to_string(_stroke_weight), _color);
                         _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
                     }
-                    for (int j = (int)(G->jIdx(_start) + 0.5) - ((int)(_step + 0.5) >> 1); j > 0; j -= (int)(_step + 0.5)) {
-                        newTick = new Line(G->xpos(j), ya - 0.5*G->ypos(G->iIdx(0) - _tick_size), G->xpos(j), ya, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                    for (double x = _start - _step; x >= xi; x -= _step) {
+                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi, "stroke_weight="+std::to_string(_stroke_weight), _color);
                         _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+
+                    if (_half_ticks) {
+                        for (double x = _start + 0.5*_step; x <= xf; x += _step) {
+                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                        for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
+                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                    }
+                } else {
+                    for (double x = _start; x <= xf; x += _step) {
+                        newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+                    for (double x = _start - _step; x >= xi; x -= _step) {
+                        newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+
+                    if (_half_ticks) {
+                        for (double x = _start + 0.5*_step; x <= xf; x += _step) {
+                            newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                        for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
+                            newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                    }
+                }
+            }
+        } else {
+            if (_start == -HUGE_VAL) {
+                if (yi > 0) {
+                    _start = ((int)(yi/_step + 1))*_step;
+                } else {
+                    _start = ((int)(yi/_step))*_step;
+                }
+            }
+            if (_start < yi || _start > yf) {
+                std::cout << "starting point for ticks can't be outside drawing bounds.\n";
+            }
+
+            if (_full_ticks) {
+                for (double y = _start; y <= yf; y += _step) {
+                    newTick = new Line(xi - G->ypos(G->iIdx(0) - _tick_size), y, xi - G->ypos(G->iIdx(0) - _tick_size), y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                    _ticks->push_back(newTick);
+                    newTick->draw(G, posession);
+                }
+                for (double y = _start - _step; y >= yi; y -= _step) {
+                    newTick = new Line(xi - G->ypos(G->iIdx(0) - _tick_size), y, xi - G->ypos(G->iIdx(0) - _tick_size), y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                    _ticks->push_back(newTick);
+                    newTick->draw(G, posession);
+                }
+
+                if (_half_ticks) {
+                    for (double y = _start + 0.5*_step; y <= yf; y += _step) {
+                        newTick = new Line(xi - 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi + 0.5*G->ypos(G->iIdx(0) - _tick_size), y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+                    for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
+                        newTick = new Line(xi - 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi + 0.5*G->ypos(G->iIdx(0) - _tick_size), y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+                }
+            } else {
+                if (_ticks_to_left) {
+                    for (double y = _start; y <= yf; y += _step) {
+                        newTick = new Line(xi - G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+                    for (double y = _start - _step; y >= yi; y -= _step) {
+                        newTick = new Line(xi - G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+
+                    if (_half_ticks) {
+                        for (double y = _start + 0.5*_step; y <= yf; y += _step) {
+                            newTick = new Line(xi - 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                        for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
+                            newTick = new Line(xi - 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                    }
+                } else {
+                    for (double y = _start; y <= yf; y += _step) {
+                        newTick = new Line(xi + G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+                    for (double y = _start - _step; y >= yi; y -= _step) {
+                        newTick = new Line(xi + G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                        _ticks->push_back(newTick);
+                        newTick->draw(G, posession);
+                    }
+
+                    if (_half_ticks) {
+                        for (double y = _start + 0.5*_step; y <= yf; y += _step) {
+                            newTick = new Line(xi + 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
+                        for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
+                            newTick = new Line(xi + 0.5*G->ypos(G->iIdx(0) - _tick_size), y, xi, y, "stroke_weight="+std::to_string(_stroke_weight), _color);
+                            _ticks->push_back(newTick);
+                            newTick->draw(G, posession);
+                        }
                     }
                 }
             }
         }
-    } else  {
-        std::cout << "smth went wrong.\n";
-        return;
     }
+
+    delete _arrow;
+    _arrow = new Arrow(xi, yi, xf, yf, "stroke_weight="+std::to_string(_stroke_weight)+",head_size="+std::to_string(_draw_head ? _head_size : 0)+",angle="+std::to_string(_head_angle), _color);
     _arrow->draw(G, posession);
+
     for (std::list<Line*>::iterator iter = _ticks->begin(); iter != _ticks->end(); iter++) {
         (*iter)->draw(G, posession);
     }

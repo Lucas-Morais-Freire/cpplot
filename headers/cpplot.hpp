@@ -195,8 +195,8 @@ class Graph {
         void drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
 
         //drawAxis and its overloads.
-        void drawAxis(bool x_axis, std::string params, cv::Vec3b color = {0,0,0});
-        void drawAxis(bool x_axis, cv::Vec3b color = {0,0,0});
+        void drawAxis(bool x_axis, double position, bool relative, std::string params, cv::Vec3b color = {0,0,0});
+        void drawAxis(bool x_axis, double position, bool relative, cv::Vec3b color = {0,0,0});
         /**
          * @brief writes image to the specified path.
          * 
