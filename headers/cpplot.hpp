@@ -172,14 +172,7 @@ class Graph {
          */
         cv::Vec3b bgColor();
 
-        /**
-         * @brief Set a particular pixel of the graph to the desired color.
-         * 
-         * @param i row index of target pixel.
-         * @param j column index of target pixel.
-         * @return cv::Vec3b* pointer to vector containing color values in BGR format.
-         */
-        cv::Vec3b* at(int i, int j);
+        cv::Mat* getCanvas();
 
         //drawLine and its overloads.
 

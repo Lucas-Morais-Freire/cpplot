@@ -31,7 +31,7 @@ class Axis : public Drawing {
 
         ~Axis();
 
-        void draw(Graph* G, cv::Mat* posession);
+        void draw(Graph* G, cv::Mat* original);
         void draw(Graph* G);
 };
 

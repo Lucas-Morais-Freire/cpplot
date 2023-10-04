@@ -184,8 +184,8 @@ cv::Vec3b Graph::bgColor() {
     return _bgColor;
 }
 
-cv::Vec3b* Graph::at(int i, int j) {
-    return &(_canvas->at<cv::Vec3b>(i, j));
+cv::Mat* Graph::getCanvas() {
+    return _canvas;
 }
 
 double Graph::iIdx(double y) {

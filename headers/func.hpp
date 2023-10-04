@@ -25,7 +25,7 @@ class Func : public Drawing {
         Func(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
         ~Func();
         void draw(Graph* G);
-        void draw(Graph* G, cv::Mat* posession);
+        void draw(Graph* G, cv::Mat* original);
 };
 
 #endif

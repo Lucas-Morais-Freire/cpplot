@@ -69,24 +69,25 @@ Arrow::~Arrow() {
 }
 
 void Arrow::draw(Graph* G) {
-    cv::Mat* posession = new cv::Mat;
-	this->draw(G, posession);
-    delete posession;
+    cv::Mat* original = new cv::Mat;
+	this->draw(G, original);
+    delete original;
 }
 
-void Arrow::draw(Graph* G, cv::Mat* posession) {
-    if (posession->data == NULL) {
-        posession = new cv::Mat(G->yres(), G->xres(), CV_8U);
-        posession->setTo(0);
-    } else if (posession->rows != G->yres() || posession->cols != G->xres()) {
-        std::cout << "Graph resolution and matrix dimensions don't match!\n";
+void Arrow::draw(Graph* G, cv::Mat* original) {
+    cv::Mat* canvas = G->getCanvas();
+
+    if (original->data == NULL) {
+        cv::cvtColor(*canvas, *original, cv::COLOR_BGR2BGRA);
+    } else if (original->rows != canvas->rows || original->cols != canvas->cols) {
+        std::cout << "Graph resolution and original matrix dimensions don't match!\n";
         return;
-    } else if (posession->type() != CV_8U) {
-        std::cout << "matrix type not compatible. it should be CV_8U\n";
+    } else if (original->type() != CV_8UC4) {
+        std::cout << "matrix type not compatible. it should be CV_8UC4\n";
         return;
     }
 
-    _stem->draw(G, posession);
+    _stem->draw(G, original);
 
     // head size is measured in pixels and the angle must be absolute. therefore the scale of the graph should not matter to how the arrow
     // is drawn. We must find where the endpoints of the head lines will sit in matrix space before converting back to R2 space.
@@ -106,12 +107,10 @@ void Arrow::draw(Graph* G, cv::Mat* posession) {
     if (_head_size > 0.5) {
         delete _lBranch;
         _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), "stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
-        _lBranch->draw(G, posession);
+        _lBranch->draw(G, original);
         
         delete _rBranch;
         _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)),"stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
-        _rBranch->draw(G, posession);
+        _rBranch->draw(G, original);
     }
-
-    
 }

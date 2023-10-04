@@ -79,20 +79,21 @@ Func::~Func() {
 }
 
 void Func::draw(Graph* G) {
-    cv::Mat* posession = new cv::Mat;
-	this->draw(G, posession);
-    delete posession;
+    cv::Mat* original = new cv::Mat;
+	this->draw(G, original);
+    delete original;
 }
 
-void Func::draw(Graph* G, cv::Mat* posession) {
-    if (posession->data == NULL) {
-        posession = new cv::Mat(G->yres(), G->xres(), CV_8U);
-        posession->setTo(0);
-    } else if (posession->rows != G->yres() || posession->cols != G->xres()) {
-        std::cout << "Graph resolution and matrix dimensions don't match!\n";
+void Func::draw(Graph* G, cv::Mat* original) {
+    cv::Mat* canvas = G->getCanvas();
+
+    if (original->data == NULL) {
+        cv::cvtColor(*canvas, *original, cv::COLOR_BGR2BGRA);
+    } else if (original->rows != canvas->rows || original->cols != canvas->cols) {
+        std::cout << "Graph resolution and original matrix dimensions don't match!\n";
         return;
-    } else if (posession->type() != CV_8U) {
-        std::cout << "matrix type not compatible. it should be CV_8U\n";
+    } else if (original->type() != CV_8UC4) {
+        std::cout << "matrix type not compatible. it should be CV_8UC4\n";
         return;
     }
 
@@ -139,6 +140,6 @@ void Func::draw(Graph* G, cv::Mat* posession) {
     }
 
     for (std::list<Line*>::iterator iter = _lines->begin(); iter != _lines->end(); iter++) {
-        (*iter)->draw(G, posession);
+        (*iter)->draw(G, original);
     }
 }
