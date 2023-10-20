@@ -9,22 +9,21 @@ class Arrow : public Drawing {
         //obligatory attributes:
 			double _xa, _ya, _xb, _yb;
 
-        // dynamic attributes:
-			// keyword-independant:
+        // working attributes:
 				Line* _rBranch;
 				Line* _lBranch;
-			// keyword-dependant
 				Line* _stem;
         
-        // keyword attributes:
+        // optional attributes:
 			double _head_size, _angle;
         
         void assign(std::string key, std::string arg);
     public:
-        Arrow() : Arrow(0, 0, 0, 0) {};
-        Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0}) : Arrow(xa, ya, xb, yb, "", color) {};
-        Arrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0, 0, 0});
+        Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0});
         ~Arrow();
+        Arrow& setHeadSize(double head_size);
+        Arrow& setAngle(double angle);
+        Arrow& setStrokeWeight(double stroke_weight);
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* original);
 };

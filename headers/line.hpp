@@ -6,18 +6,14 @@
 class Line : public Drawing {
     protected:
         // obligatory attributes:
-                double _xa, _ya, _xb, _yb;
+            double _xa, _ya, _xb, _yb;
         
-        // keyword attributes:
-                double _stroke_weight;
-        
-        void assign(std::string key, std::string arg);
+        // optional attributes:
+            double _stroke_weight;
     public:
-        Line() : Line(0, 0, 0, 0) {};
-        Line(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0}) : Line(xa, ya, xb, yb, "", color) {};
-        Line(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0, 0, 0});
+        Line(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0});
         void draw(Graph* G);
-        void draw(Graph* G, cv::Mat* posession);
+        void draw(Graph* G, cv::Mat* original);
         void setXa(double xa);
         double xa();
         void setYa(double ya);
@@ -26,9 +22,9 @@ class Line : public Drawing {
         double xb();
         void setYb(double yb);
         double yb();
-        void setStrokeWeight(double stroke_weight);
+        Line& setStrokeWeight(double stroke_weight);
         double strokeWeight();
-        void setColor(cv::Vec3b color);
+        Line& setColor(cv::Vec3b color);
         cv::Vec3b color();
 };
 

@@ -3,23 +3,7 @@
 #include <iostream>
 #include <regex>
 
-void Line::assign(std::string key, std::string arg) {
-	std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
-	if (std::regex_match(arg, double_pattern)) {
-		if (key == "stroke_weight") {
-			if (std::stod(arg) < 0) {
-				std::cout << arg << "can't be negative.\n";
-				return;
-			}
-			_stroke_weight = std::stod(arg);
-			return;
-		}
-	} else {
-		std::cout << "argument \"" << arg << "\" is not a valid double literal.\n";
-	}
-}
-
-Line::Line(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+Line::Line(double xa, double ya, double xb, double yb, cv::Vec3b color) {
 	// initialize obligatory values:
 		_xa = xa;
 		_ya = ya;
@@ -27,19 +11,8 @@ Line::Line(double xa, double ya, double xb, double yb, std::string params, cv::V
 		_yb = yb;
 		_color = color;
 
-	// Line has these optional parameters:
-	_keys = {
-		"stroke_weight"
-	};
-	// initialize optional parameters with given string:
-	std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
-	// if some values were not assigned, assign their default values:
-	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
-		if ((*iter) == "stroke_weight") {
-			_stroke_weight = 0.5;
-		}
-	}
-	delete keys;
+	// initialize optional values:
+		_stroke_weight = 0.5;
 }
 
 void Line::draw(Graph* G) {
@@ -165,16 +138,20 @@ double Line::yb() {
 	return _yb;
 }
 
-void Line::setStrokeWeight(double sw) {
+Line& Line::setStrokeWeight(double sw) {
 	_stroke_weight = sw;
+
+	return *this;
 }
 
 double Line::strokeWeight() {
 	return _stroke_weight;
 }
 
-void Line::setColor(cv::Vec3b color) {
+Line& Line::setColor(cv::Vec3b color) {
 	_color = color;
+
+	return *this;
 }
 
 cv::Vec3b Line::color() {

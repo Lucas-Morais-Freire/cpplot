@@ -7,59 +7,17 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-void Arrow::assign(std::string key, std::string arg) {
-    std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
-	if (std::regex_match(arg, double_pattern)) {
-		if (key == "stroke_weight") {
-			if (std::stod(arg) < 0) {
-				std::cout << key << "can't be negative.\n";
-				return;
-			}
-			_stem = new Line(_xa, _ya, _xb, _yb, key + " = " + arg, _color);
-			return;
-		} else if (key == "angle") {
-            _angle = M_PI/180*std::stod(arg);
-            return;
-        } else if (key == "head_size") {
-            if (std::stod(arg) < 0) {
-				std::cout << key << "can't be negative.\n";
-				return;
-			}
-            _head_size = std::stod(arg);
-            return;
-        }
-	} else {
-		std::cout << "argument \"" << arg << "\" is not a valid double literal.\n";
-	}
-}
-
-Arrow::Arrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color) {
+Arrow::Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color) {
     // initialize obligatory values:
         _xa = xa; _ya = ya; _xb = xb; _yb = yb;
         _color = color;
     // initialize dynamic values:
         _lBranch = NULL;
         _rBranch = NULL;
-    
-    // Arrow has these optional parameters:
-    _keys = {
-        "angle",
-        "stroke_weight",
-        "head_size"
-    };
-    // initialize optional parameters with given string:
-    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
-    // if some values were not assigned, assign their default values:
-	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
-		if ((*iter) == "angle") {
-            _angle = M_PI/9;
-		} else if ((*iter) == "stroke_weight") {
-			_stem = new Line(_xa, _ya, _xb, _yb, _color);
-        } else if ((*iter) == "head_size") {
-            _head_size = 20;
-        }
-	}
-	delete keys;
+        _stem = new Line(_xa, _ya, _xb, _yb, _color);
+    //initialize optional values:
+        _angle = M_PI/9;
+        _head_size = 20;
 }
 
 Arrow::~Arrow() {
@@ -68,10 +26,32 @@ Arrow::~Arrow() {
     delete _lBranch;
 }
 
+Arrow& Arrow::setHeadSize(double head_size) {
+    if (head_size < 0.5) {
+        _head_size = 0.0;
+    } else {
+        _head_size = head_size;
+    }
+
+    return *this;
+}
+
+Arrow& Arrow::setAngle(double angle) {
+    _angle = M_PI/180.0*angle;
+    
+    return *this;
+}
+
 void Arrow::draw(Graph* G) {
     cv::Mat* original = new cv::Mat;
 	this->draw(G, original);
     delete original;
+}
+
+Arrow& Arrow::setStrokeWeight(double stroke_weight) {
+    _stem->setStrokeWeight(stroke_weight);
+
+    return *this;
 }
 
 void Arrow::draw(Graph* G, cv::Mat* original) {
@@ -106,11 +86,13 @@ void Arrow::draw(Graph* G, cv::Mat* original) {
     
     if (_head_size > 0.5) {
         delete _lBranch;
-        _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), "stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
+        _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), _stem->color());
+        _lBranch->setStrokeWeight(_stem->strokeWeight());
         _lBranch->draw(G, original);
         
         delete _rBranch;
-        _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)),"stroke_weight=" + std::to_string(_stem->strokeWeight()), _stem->color());
+        _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)), _stem->color());
+        _rBranch->setStrokeWeight(_stem->strokeWeight());
         _rBranch->draw(G, original);
     }
 }

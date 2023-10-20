@@ -11,10 +11,10 @@ class Func : public Drawing {
         // obligatory attributes:
             double (*_func)(double);
 
-        // dynamic attributes:
+        // working attributes:
             std::list<Line*>* _lines;
 
-        // keyword attributes:
+        // optional attributes:
             double _stroke_weight;
             double _xmin, _xmax, _ymin, _ymax;
 
