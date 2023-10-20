@@ -186,6 +186,8 @@ class Graph {
         //drawFunc and its overloads.
         void drawFunc(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
         void drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
+        void drawFunc(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color = {0,0,0});
+        void drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0});
 
         //drawAxis and its overloads.
         void drawAxis(bool x_axis, double position, bool relative, std::string params, cv::Vec3b color = {0,0,0});

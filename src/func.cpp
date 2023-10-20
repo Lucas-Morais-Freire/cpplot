@@ -1,10 +1,7 @@
 #include "../headers/func.hpp"
 #include "../headers/cpplot.hpp"
 #include <regex>
-
-double cpl_default(double x) {
-    return 0;
-}
+#include <algorithm>
 
 void Func::assign(std::string key, std::string arg) {
     std::regex double_pattern("(0|\\-?(0|[1-9][0-9]*)(\\.[0-9]*)?|\\-?\\.[0-9]+)");
@@ -41,7 +38,7 @@ Func::Func(double (*func)(double), std::string params, cv::Vec3b color) {
         _color = color;
 
     // initialize dynamic values:
-            _lines = new std::list<Line*>;
+        _lines = new std::list<Line*>;
     
     // Func has these optional parameters:
     _keys = {
@@ -68,6 +65,76 @@ Func::Func(double (*func)(double), std::string params, cv::Vec3b color) {
         }
 	}
 	delete keys;
+}
+
+Func::Func(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color) {
+    // initialize obligatory values:
+        std::vector<double>::iterator iterx = x.begin();
+        std::vector<double>::iterator iterx_prev = iterx;
+        if ((*iterx) < (*iterx_prev)) {
+            std::cout << "input x vector should be ordered.\n";
+            exit(1);
+        }
+        if (x.size() != y.size()) {
+            std::cout << "input vectors x and y must have the same size.\n";
+            exit(1);
+        }
+        if (x.size() < 2) {
+            std::cout << "input vector x should have at least size 2.\n";
+            exit(1);
+        }
+        _func = [&x, &y](double t) {
+            std::vector<double>::iterator xiter = x.begin();
+            std::vector<double>::iterator xiter_prev = xiter;
+            xiter++;
+            std::vector<double>::iterator yiter = y.begin();
+            std::vector<double>::iterator yiter_prev = yiter;
+            yiter++;
+            while (xiter != x.end()) {
+                if (t <= (*xiter)) {
+                    return ((*yiter) - (*yiter_prev))/((*xiter) - (*xiter_prev))*(t - (*xiter_prev)) + (*yiter_prev);
+                }
+
+                xiter++;
+                xiter_prev++;
+                yiter++;
+                yiter_prev++;
+            }
+            return t;
+        };
+        _color = color;
+
+    // initialize dynamic values:
+        _lines = new std::list<Line*>;
+    
+    // Func has these optional parameters:
+    _keys = {
+        "stroke_weight",
+        "xmin",
+        "xmax",
+        "ymin",
+        "ymax"
+    };
+    // initialize optional parameters with given string:
+    std::list<std::string>* keys = params != "" ? init(params) : new std::list<std::string>(_keys);
+    // if some values were not assigned, assign their default values:
+	for(std::list<std::string>::iterator iter = keys->begin(); iter != keys->end(); iter++) {
+		if ((*iter) == "stroke_weight") {
+            _stroke_weight = 2;
+        } else if ((*iter) == "xmin") {
+            _xmin = -HUGE_VAL;
+        } else if ((*iter) == "xmax") {
+            _xmax = HUGE_VAL;
+        } else if ((*iter) == "ymin") {
+            _ymin = -HUGE_VAL;
+        } else if ((*iter) == "ymax") {
+            _ymax = HUGE_VAL;
+        }
+	}
+	delete keys;
+
+    _xmin = _xmin < (*(x.begin())) ? (*(x.begin())) : _xmin;
+    _xmax = _xmax > (*(--(x.end()))) ? (*(--(x.end()))) : _xmax;
 }
 
 Func::~Func() {
@@ -113,8 +180,8 @@ void Func::draw(Graph* G, cv::Mat* original) {
     while (j <= (int)(G->jIdx(xmax) + 0.5) - 1) {
         x1 = G->xpos(j);
         x2 = G->xpos(++j);
-        f1 = (*_func)(x1);
-        f2 = (*_func)(x2);
+        f1 = _func(x1);
+        f2 = _func(x2);
         if (ymin <= f1 && f1 <= ymax && ymin <= f2 && f2 <= ymax) {
             newLine = new Line(x1, f1, x2, f2, "stroke_weight=" + std::to_string(_stroke_weight), _color);
             _lines->push_back(newLine);

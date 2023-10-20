@@ -234,6 +234,16 @@ void Graph::drawFunc(double (*func)(double), cv::Vec3b color) {
     this->drawFunc(func, "", color);
 }
 
+void Graph::drawFunc(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color) {
+    Func* newFunc = new Func(x, y, params, color);
+    newFunc->draw(this);
+    _drawOrder->push_back(newFunc);
+}
+
+void Graph::drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color) {
+    this->drawFunc(x, y, "", color);
+}
+
 void Graph::drawAxis(bool x_axis, double position, bool relative, std::string params, cv::Vec3b color) {
     Axis* newAxis = new Axis(x_axis, position, relative, params, color);
     newAxis->draw(this);

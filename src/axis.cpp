@@ -221,7 +221,7 @@ void Axis::draw(Graph* G, cv::Mat* original) {
         }
 
         if (_step == -HUGE_VAL) {
-            _step = 1 << (_x_axis ? (int)(std::log((G->xmax() - G->xmin())/6)) : (int)(std::log((G->ymax() - G->ymin())/6)));
+            _step = std::pow(2, (_x_axis ? std::floor(std::log2((G->xmax() - G->xmin())/6)) : std::floor(std::log2((G->ymax() - G->ymin())/6))));
         }
 
         Line* newTick;

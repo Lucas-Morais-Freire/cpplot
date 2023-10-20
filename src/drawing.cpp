@@ -16,7 +16,7 @@ std::list<std::string>* Drawing::init(std::string params) {
         std::sregex_iterator kwarg_match_iter(params.begin(), params.end(), kwarg_matches);
         while (kwarg_match_iter != std::sregex_iterator()) {
             // get the position of the character just after the key:
-            int pos = kwarg_match_iter->str().find(" ") != std::string::npos ? kwarg_match_iter->str().find(" ") : kwarg_match_iter->str().find("=");
+            size_t pos = kwarg_match_iter->str().find(" ") != std::string::npos ? kwarg_match_iter->str().find(" ") : kwarg_match_iter->str().find("=");
             // extract only the key's string from the iterator and check if it is a valid key:
             std::string key = kwarg_match_iter->str().substr(0,pos);
             std::list<std::string>::iterator keys_list_iter = std::find(keys->begin(), keys->end(), key);

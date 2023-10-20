@@ -4,12 +4,10 @@
 #include "drawing.hpp"
 class Line;
 
-double cpl_default(double x);
-
 class Func : public Drawing {
     protected:
         // obligatory attributes:
-            double (*_func)(double);
+            std::function<double(double)> _func;
 
         // dynamic attributes:
             std::list<Line*>* _lines;
@@ -20,10 +18,15 @@ class Func : public Drawing {
 
         void assign(std::string key, std::string arg);
     public:
-        Func() : Func(cpl_default, ""){};
+        Func() : Func([](double x){return x;}, ""){};
         Func(double (*func)(double), cv::Vec3b color = {0,0,0}) : Func(func, "", color){};
         Func(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
+
+        Func(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0}) : Func(x, y, "", color){};
+        Func(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color = {0,0,0});
+
         ~Func();
+
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* original);
 };
