@@ -227,7 +227,19 @@ class Graph {
 
         Line& drawLine(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0});
 
+<<<<<<< HEAD
         Arrow& drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0});
+=======
+        //drawArrow and its overloads.
+        void drawArrow(double xa, double ya, double xb, double yb, std::string params, cv::Vec3b color = {0,0,0});
+        void drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0,0,0});
+        
+        //drawFunc and its overloads.
+        void drawFunc(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
+        void drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
+        void drawFunc(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color = {0,0,0});
+        void drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0});
+>>>>>>> origin/temp
 
         /**
          * @brief writes image to the specified path.
