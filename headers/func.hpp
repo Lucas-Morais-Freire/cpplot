@@ -15,18 +15,15 @@ class Func : public Drawing {
         // optional attributes:
             double _stroke_weight;
             double _xmin, _xmax, _ymin, _ymax;
-
-        void assign(std::string key, std::string arg);
     public:
-        Func() : Func([](double x){return x;}, ""){};
-        Func(double (*func)(double), cv::Vec3b color = {0,0,0}) : Func(func, "", color){};
-        Func(double (*func)(double), std::string params, cv::Vec3b color = {0,0,0});
-
-        Func(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0}) : Func(x, y, "", color){};
-        Func(std::vector<double>& x, std::vector<double>& y, std::string params, cv::Vec3b color = {0,0,0});
-
+        Func(double (*func)(double), cv::Vec3b color = {0,0,0});
+        Func(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0});
         ~Func();
-
+        Func& setStrokeWeight(double stroke_weight);
+        Func& setXmin(double xmin);
+        Func& setXmax(double xmax);
+        Func& setYmin(double ymin);
+        Func& setYmax(double ymax);
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* original);
 };

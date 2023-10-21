@@ -7,6 +7,7 @@ add_library(cpplot
 	src/cpplot.cpp
 	src/line.cpp
 	src/arrow.cpp
+	src/func.cpp
 )
 
 target_link_libraries(cpplot ${OpenCV_LIBS})

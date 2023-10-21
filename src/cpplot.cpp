@@ -1,7 +1,5 @@
 #include "../headers/cpplot.hpp"
 #include <iostream>
-#include <regex>
-#include <algorithm>
 
 Graph::Graph() {
     // first, those variables who are keyword arguments:  
@@ -210,6 +208,17 @@ Arrow& Graph::drawArrow(double xa, double ya, double xb, double yb, cv::Vec3b co
     Arrow* newArrow = new Arrow(xa, ya, xb, yb, color);
     _drawOrder->push_back(newArrow);
     return *newArrow;
+}
+
+Func& Graph::drawFunc(double (*func)(double), cv::Vec3b color) {
+    Func* newFunc = new Func(func, color);
+    _drawOrder->push_back(newFunc);
+    return *newFunc;
+}
+Func& Graph::drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color) {
+    Func* newFunc = new Func(x, y, color);
+    _drawOrder->push_back(newFunc);
+    return *newFunc;
 }
 
 void Graph::write(const char* filename) {

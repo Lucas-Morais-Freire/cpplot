@@ -1,7 +1,6 @@
 #include "../headers/line.hpp"
 #include "../headers/cpplot.hpp"
 #include <iostream>
-#include <regex>
 
 Line::Line(double xa, double ya, double xb, double yb, cv::Vec3b color) {
 	// initialize obligatory values:
@@ -138,8 +137,8 @@ double Line::yb() {
 	return _yb;
 }
 
-Line& Line::setStrokeWeight(double sw) {
-	_stroke_weight = sw;
+Line& Line::setStrokeWeight(double stroke_weight) {
+	_stroke_weight = stroke_weight;
 
 	return *this;
 }
