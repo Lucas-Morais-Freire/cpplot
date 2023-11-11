@@ -221,6 +221,12 @@ Func& Graph::drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b 
     return *newFunc;
 }
 
+Axis& Graph::drawAxis(bool x_axis, double position, bool relative, cv::Vec3b color) {
+    Axis* newAxis = new Axis(x_axis, position, relative, color);
+    _drawOrder->push_back(newAxis);
+    return *newAxis;
+}
+
 void Graph::write(const char* filename) {
     (*_canvas) = cv::Scalar(_bgColor[0], _bgColor[1], _bgColor[2]);
     for (std::list<Drawing*>::iterator iter = _drawOrder->begin(); iter != _drawOrder->end(); iter++) {

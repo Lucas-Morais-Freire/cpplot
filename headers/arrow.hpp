@@ -16,8 +16,6 @@ class Arrow : public Drawing {
         
         // optional attributes:
 			double _head_size, _angle;
-        
-        void assign(std::string key, std::string arg);
     public:
         Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0});
         ~Arrow();

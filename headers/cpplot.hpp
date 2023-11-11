@@ -29,9 +29,7 @@ class Graph {
          * @brief list of objects drawn on _canvas (protected).
          */
         std::list<Drawing*>* _drawOrder;
-
-        std::list<std::string> _keys = {"xres", "yres"};
-         int _xres, _yres;
+        int _xres, _yres;
     public:
         //constructors
         /**
@@ -231,6 +229,8 @@ class Graph {
 
         Func& drawFunc(double (*func)(double), cv::Vec3b color = {0,0,0});
         Func& drawFunc(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0});
+
+        Axis& drawAxis(bool x_axis, double position, bool relative, cv::Vec3b color = {0,0,0});
 
         /**
          * @brief writes image to the specified path.
