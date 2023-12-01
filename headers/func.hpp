@@ -19,11 +19,11 @@ class Func : public Drawing {
         Func(double (*func)(double), cv::Vec3b color = {0,0,0});
         Func(std::vector<double>& x, std::vector<double>& y, cv::Vec3b color = {0,0,0});
         ~Func();
-        Func& setStrokeWeight(double stroke_weight);
-        Func& setXmin(double xmin);
-        Func& setXmax(double xmax);
-        Func& setYmin(double ymin);
-        Func& setYmax(double ymax);
+        Func& strokeWeight(double stroke_weight);
+        Func& xmin(double xmin);
+        Func& xmax(double xmax);
+        Func& ymin(double ymin);
+        Func& ymax(double ymax);
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* original);
 };

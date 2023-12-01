@@ -81,31 +81,31 @@ Func::~Func() {
     delete _lines;
 }
 
-Func& Func::setStrokeWeight(double stroke_weight) {
+Func& Func::strokeWeight(double stroke_weight) {
     _stroke_weight = stroke_weight;
 
     return *this;    
 }
 
-Func& Func::setXmin(double xmin) {
+Func& Func::xmin(double xmin) {
     _xmin = xmin;
 
     return *this;    
 }
 
-Func& Func::setXmax(double xmax) {
+Func& Func::xmax(double xmax) {
     _xmax = xmax;
 
     return *this;    
 }
 
-Func& Func::setYmin(double ymin) {
+Func& Func::ymin(double ymin) {
     _ymin = ymin;
 
     return *this;    
 }
 
-Func& Func::setYmax(double ymax) {
+Func& Func::ymax(double ymax) {
     _ymax = ymax;
 
     return *this;    
@@ -151,31 +151,31 @@ void Func::draw(Graph* G, cv::Mat* original) {
         f2 = _func(x2);
         if (ymin <= f1 && f1 <= ymax && ymin <= f2 && f2 <= ymax) {
             newLine = new Line(x1, f1, x2, f2, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (ymin > f1 && ymin <= f2 && f2 <= ymax) {
             newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, x2, f2, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (f1 > ymax && ymin <= f2 && f2 <= ymax) {
             newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, x2, f2, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (ymin <= f1 && f1 <= ymax && ymin > f2) {
             newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (ymin <= f1 && f1 <= ymax && f2 > ymax) {
             newLine = new Line(x1, f1, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (ymin > f1 && f2 > ymax) {
             newLine = new Line((x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, (x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         } else if (f1 > ymax && ymin > f2) {
             newLine = new Line((x2 - x1)/(f2 - f1)*(ymax - f1) + x1, ymax, (x2 - x1)/(f2 - f1)*(ymin - f1) + x1, ymin, _color);
-            newLine->setStrokeWeight(_stroke_weight);
+            newLine->strokeWeight(_stroke_weight);
         _lines->push_back(newLine);
         }
     }

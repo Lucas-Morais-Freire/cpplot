@@ -25,7 +25,7 @@ Arrow::~Arrow() {
     delete _lBranch;
 }
 
-Arrow& Arrow::setHeadSize(double head_size) {
+Arrow& Arrow::headSize(double head_size) {
     if (head_size < 0.5) {
         _head_size = 0.0;
     } else {
@@ -35,9 +35,15 @@ Arrow& Arrow::setHeadSize(double head_size) {
     return *this;
 }
 
-Arrow& Arrow::setAngle(double angle) {
+Arrow& Arrow::angle(double angle) {
     _angle = M_PI/180.0*angle;
     
+    return *this;
+}
+
+Arrow& Arrow::strokeWeight(double stroke_weight) {
+    _stem->strokeWeight(stroke_weight);
+
     return *this;
 }
 
@@ -45,12 +51,6 @@ void Arrow::draw(Graph* G) {
     cv::Mat* original = new cv::Mat;
 	this->draw(G, original);
     delete original;
-}
-
-Arrow& Arrow::setStrokeWeight(double stroke_weight) {
-    _stem->setStrokeWeight(stroke_weight);
-
-    return *this;
 }
 
 void Arrow::draw(Graph* G, cv::Mat* original) {
@@ -74,24 +74,24 @@ void Arrow::draw(Graph* G, cv::Mat* original) {
     double S = sin(_angle); double C = cos(_angle);
 
     // x coordinates in matrix space depend on the y coordinate in R2.
-    double xa = G->iIdx(_stem->ya());
-    double xb = G->iIdx(_stem->yb());
+    double xa = G->iIdx(_stem->getya());
+    double xb = G->iIdx(_stem->getyb());
     // y coordinates in matrix space depend on the x coordinate in R2.
-    double ya = G->jIdx(_stem->xa());
-    double yb = G->jIdx(_stem->xb());
+    double ya = G->jIdx(_stem->getxa());
+    double yb = G->jIdx(_stem->getxb());
     // now we find where the head lines' endpoints will sit in matrix space:
     // normalize the size with respect to arrow size.
     double hsize = _head_size/sqrt((xb - xa)*(xb - xa) + (yb - ya)*(yb - ya));
     
     if (_head_size > 0.5) {
         delete _lBranch;
-        _lBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), _stem->color());
-        _lBranch->setStrokeWeight(_stem->strokeWeight());
+        _lBranch = new Line(_stem->getxb(), _stem->getyb(), G->xpos(yb + hsize*((ya - yb)*C + (xa - xb)*S)), G->ypos(xb + hsize*((xa - xb)*C + (yb - ya)*S)), _stem->getColor());
+        _lBranch->strokeWeight(_stem->getStrokeWeight());
         _lBranch->draw(G, original);
         
         delete _rBranch;
-        _rBranch = new Line(_stem->xb(), _stem->yb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)), _stem->color());
-        _rBranch->setStrokeWeight(_stem->strokeWeight());
+        _rBranch = new Line(_stem->getxb(), _stem->getyb(), G->xpos(yb + hsize*((ya - yb)*C + (xb - xa)*S)), G->ypos(xb + hsize*((xa - xb)*C + (ya - yb)*S)), _stem->getColor());
+        _rBranch->strokeWeight(_stem->getStrokeWeight());
         _rBranch->draw(G, original);
     }
 }

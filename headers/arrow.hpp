@@ -19,9 +19,9 @@ class Arrow : public Drawing {
     public:
         Arrow(double xa, double ya, double xb, double yb, cv::Vec3b color = {0, 0, 0});
         ~Arrow();
-        Arrow& setHeadSize(double head_size);
-        Arrow& setAngle(double angle);
-        Arrow& setStrokeWeight(double stroke_weight);
+        Arrow& headSize(double head_size);
+        Arrow& angle(double angle);
+        Arrow& strokeWeight(double stroke_weight);
         void draw(Graph* G);
         void draw(Graph* G, cv::Mat* original);
 };

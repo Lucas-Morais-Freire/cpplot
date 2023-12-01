@@ -37,6 +37,9 @@ Axis::Axis(bool x_axis, double position, bool relative, cv::Vec3b color) {
         _half_ticks = true;
         _head_size = 20.0;
         _head_angle = 20.0;
+        _draw_numbers = true;
+        _number_size = 0;
+        _number_offset = -HUGE_VAL;
 }
 
 Axis::~Axis() {
@@ -98,6 +101,16 @@ Axis& Axis::headAngle(double head_angle) {
     return *this;
 }
 
+Axis& Axis::numberSize(int number_size) {
+    _number_size = number_size;
+    return *this;
+}
+
+Axis& Axis::numberOffset(double number_offset) {
+    _number_offset = number_offset;
+    return *this;
+}
+
 Axis& Axis::drawTicks(bool draw_ticks) {
     _draw_ticks = draw_ticks;
     return *this;
@@ -123,6 +136,10 @@ Axis& Axis::drawHead(bool draw_head) {
     return *this;
 }
 
+Axis& Axis::drawNumbers(bool draw_numbers) {
+    _draw_numbers = draw_numbers;
+    return *this;
+}
 
 void Axis::draw(Graph* G, cv::Mat* original) {
     cv::Mat* canvas = G->getCanvas();
@@ -166,100 +183,134 @@ void Axis::draw(Graph* G, cv::Mat* original) {
         }
     }
 
-    if (_draw_ticks) {
-        if (_tick_size == -HUGE_VAL) {
-            _tick_size = 0.02*(canvas->rows < canvas->cols ? canvas->rows : canvas->cols);
-        }
+    double tick_size, step, start, number_size, number_offset;
 
-        if (_step == -HUGE_VAL) {
-            _step = std::pow(2, (_x_axis ? std::floor(std::log2((G->xmax() - G->xmin())/6)) : std::floor(std::log2((G->ymax() - G->ymin())/6))));
-        }
+    if (_tick_size == -HUGE_VAL) {
+        tick_size = 0.02*(canvas->rows < canvas->cols ? canvas->rows : canvas->cols);
+    } else {
+        tick_size = _tick_size;
+    }
 
+    if (_step == -HUGE_VAL) {
+        step = std::pow(2, (_x_axis ? std::floor(std::log2((G->xmax() - G->xmin())/6)) : std::floor(std::log2((G->ymax() - G->ymin())/6))));
+    } else {
+        step = _step;
+    }
+
+    if (_draw_ticks || _draw_numbers) {
         Line* newTick;
         if (_x_axis) {
             if (_start == -HUGE_VAL) {
                 if (xi > 0) {
-                    _start = ((int)(xi/_step + 1))*_step;
+                    start = ((int)(xi/step + 1))*step;
                 } else {
-                    _start = ((int)(xi/_step))*_step;
+                    start = ((int)(xi/step))*step;
                 }
+            } else {
+                start = _start;
             }
-            if (_start < xi || _start > xf) {
-                std::cout << "starting point for ticks can't be outside drawing bounds.\n";
+            if (start < xi || start > xf) {
+                std::cout << "starting point for ticks or numbers can't be outside drawing bounds.\n";
                 return;
             }
 
-            if (_full_ticks) {
-                for (double x = _start; x <= xf; x += _step) {
-                    newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi - G->ypos(G->iIdx(0) - _tick_size), _color);
-                    newTick->setStrokeWeight(_stroke_weight);
-                    _ticks->push_back(newTick);
+            if (_draw_numbers) {
+                if (_number_size <= 0) {
+                    number_size = 1;
+                } else {
+                    number_size = _number_size;
                 }
-                for (double x = _start - _step; x >= xi; x -= _step) {
-                    newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi - G->ypos(G->iIdx(0) - _tick_size), _color);
-                    newTick->setStrokeWeight(_stroke_weight);
-                    _ticks->push_back(newTick);
+                if (_number_offset == -HUGE_VAL) {
+                    number_offset = tick_size/2 + 1;
+                } else {
+                    number_offset = _number_offset;
                 }
 
-                if (_half_ticks) {
-                    for (double x = _start + 0.5*_step; x <= xf; x += _step) {
-                        newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-                    for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
-                        newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
+                cv::Point pt;
+                pt.y = (int)(G->iIdx(yi) < 0 ? 0 : (G->iIdx(yi) >= canvas->rows ? canvas->rows - 1 : G->iIdx(yi)));
+                for (double x = start; x <= xf; x += step) {
+                    pt.x = (int)(G->jIdx(x));
+                    cv::putText(*canvas, cv::String(cv::format("%.0f", x)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
                 }
-            } else {
-                if (_ticks_to_left) {
-                    for (double x = _start; x <= xf; x += _step) {
-                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
+                for (double x = start - step; x >= xi; x -= step) {
+                    pt.x = (int)(G->jIdx(x));
+                    cv::putText(*canvas, cv::String(cv::format("%.0f", x)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                }
+            }
+
+            if (_draw_ticks) {
+                if (_full_ticks) {
+                    for (double x = start; x <= xf; x += step) {
+                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - tick_size), x, yi - G->ypos(G->iIdx(0) - tick_size), _color);
+                        newTick->strokeWeight(_stroke_weight);
                         _ticks->push_back(newTick);
                     }
-                    for (double x = _start - _step; x >= xi; x -= _step) {
-                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - _tick_size), x, yi, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
+                    for (double x = start - step; x >= xi; x -= step) {
+                        newTick = new Line(x, yi + G->ypos(G->iIdx(0) - tick_size), x, yi - G->ypos(G->iIdx(0) - tick_size), _color);
+                        newTick->strokeWeight(_stroke_weight);
                         _ticks->push_back(newTick);
                     }
 
                     if (_half_ticks) {
-                        for (double x = _start + 0.5*_step; x <= xf; x += _step) {
-                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double x = start + 0.5*step; x <= xf; x += step) {
+                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - tick_size), _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
-                        for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
-                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - _tick_size), x, yi, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double x = start - 0.5*step; x >= xi; x -= step) {
+                            newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - tick_size), x, yi - 0.5*G->ypos(G->iIdx(0) - tick_size), _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
                     }
                 } else {
-                    for (double x = _start; x <= xf; x += _step) {
-                        newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - _tick_size), _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-                    for (double x = _start - _step; x >= xi; x -= _step) {
-                        newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - _tick_size), _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-
-                    if (_half_ticks) {
-                        for (double x = _start + 0.5*_step; x <= xf; x += _step) {
-                            newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                    if (_ticks_to_left) {
+                        for (double x = start; x <= xf; x += step) {
+                            newTick = new Line(x, yi + G->ypos(G->iIdx(0) - tick_size), x, yi, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
-                        for (double x = _start - 0.5*_step; x >= xi; x -= _step) {
-                            newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - _tick_size), _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double x = start - step; x >= xi; x -= step) {
+                            newTick = new Line(x, yi + G->ypos(G->iIdx(0) - tick_size), x, yi, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
+                        }
+
+                        if (_half_ticks) {
+                            for (double x = start + 0.5*step; x <= xf; x += step) {
+                                newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - tick_size), x, yi, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                            for (double x = start - 0.5*step; x >= xi; x -= step) {
+                                newTick = new Line(x, yi + 0.5*G->ypos(G->iIdx(0) - tick_size), x, yi, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                        }
+                    } else {
+                        for (double x = start; x <= xf; x += step) {
+                            newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - tick_size), _color);
+                            newTick->strokeWeight(_stroke_weight);
+                            _ticks->push_back(newTick);
+                        }
+                        for (double x = start - step; x >= xi; x -= step) {
+                            newTick = new Line(x, yi, x, yi - G->ypos(G->iIdx(0) - tick_size), _color);
+                            newTick->strokeWeight(_stroke_weight);
+                            _ticks->push_back(newTick);
+                        }
+
+                        if (_half_ticks) {
+                            for (double x = start + 0.5*step; x <= xf; x += step) {
+                                newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - tick_size), _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                            for (double x = start - 0.5*step; x >= xi; x -= step) {
+                                newTick = new Line(x, yi, x, yi - 0.5*G->ypos(G->iIdx(0) - tick_size), _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
                         }
                     }
                 }
@@ -267,86 +318,114 @@ void Axis::draw(Graph* G, cv::Mat* original) {
         } else {
             if (_start == -HUGE_VAL) {
                 if (yi > 0) {
-                    _start = ((int)(yi/_step + 1))*_step;
+                    start = ((int)(yi/step + 1))*step;
                 } else {
-                    _start = ((int)(yi/_step))*_step;
+                    start = ((int)(yi/step))*step;
                 }
+            } else {
+                start = _start;
             }
-            if (_start < yi || _start > yf) {
+            if (start < yi || start > yf) {
                 std::cout << "starting point for ticks can't be outside drawing bounds.\n";
             }
 
-            if (_full_ticks) {
-                for (double y = _start; y <= yf; y += _step) {
-                    newTick = new Line(xi - G->xpos(G->jIdx(0) + _tick_size), y, xi + G->xpos(G->jIdx(0) + _tick_size), y, _color);
-                    newTick->setStrokeWeight(_stroke_weight);
-                    _ticks->push_back(newTick);
+            if (_draw_numbers) {
+                if (_number_size <= 0) {
+                    number_size = 1;
+                } else {
+                    number_size = _number_size;
                 }
-                for (double y = _start - _step; y >= yi; y -= _step) {
-                    newTick = new Line(xi - G->xpos(G->jIdx(0) + _tick_size), y, xi + G->xpos(G->jIdx(0) + _tick_size), y, _color);
-                    newTick->setStrokeWeight(_stroke_weight);
-                    _ticks->push_back(newTick);
+                if (_number_offset == -HUGE_VAL) {
+                    number_offset = tick_size/2 + 1;
+                } else {
+                    number_offset = _number_offset;
                 }
 
-                if (_half_ticks) {
-                    for (double y = _start + 0.5*_step; y <= yf; y += _step) {
-                        newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi + 0.5*G->xpos(G->jIdx(0) + _tick_size), y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-                    for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
-                        newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi + 0.5*G->xpos(G->jIdx(0) + _tick_size), y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
+                cv::Point pt;
+                pt.x = (int)(G->jIdx(xi) < 0 ? 0 : (G->jIdx(xi) >= canvas->cols ? canvas->cols - 1 : G->jIdx(xi)));
+                for (double y = start; y <= yf; y += step) {
+                    pt.y = (int)(G->iIdx(y));
+                    cv::putText(*canvas, cv::String(cv::format("%.0f", y)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
                 }
-            } else {
-                if (_ticks_to_left) {
-                    for (double y = _start; y <= yf; y += _step) {
-                        newTick = new Line(xi - G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
+                for (double y = start - step; y >= yi; y -= step) {
+                    pt.y = (int)(G->iIdx(y));
+                    cv::putText(*canvas, cv::String(cv::format("%.0f", y)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                }
+            }
+
+            if (_draw_ticks) {
+                if (_full_ticks) {
+                    for (double y = start; y <= yf; y += step) {
+                        newTick = new Line(xi - G->xpos(G->jIdx(0) + tick_size), y, xi + G->xpos(G->jIdx(0) + tick_size), y, _color);
+                        newTick->strokeWeight(_stroke_weight);
                         _ticks->push_back(newTick);
                     }
-                    for (double y = _start - _step; y >= yi; y -= _step) {
-                        newTick = new Line(xi - G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
+                    for (double y = start - step; y >= yi; y -= step) {
+                        newTick = new Line(xi - G->xpos(G->jIdx(0) + tick_size), y, xi + G->xpos(G->jIdx(0) + tick_size), y, _color);
+                        newTick->strokeWeight(_stroke_weight);
                         _ticks->push_back(newTick);
                     }
 
                     if (_half_ticks) {
-                        for (double y = _start + 0.5*_step; y <= yf; y += _step) {
-                            newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double y = start + 0.5*step; y <= yf; y += step) {
+                            newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi + 0.5*G->xpos(G->jIdx(0) + tick_size), y, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
-                        for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
-                            newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double y = start - 0.5*step; y >= yi; y -= step) {
+                            newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi + 0.5*G->xpos(G->jIdx(0) + tick_size), y, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
                     }
                 } else {
-                    for (double y = _start; y <= yf; y += _step) {
-                        newTick = new Line(xi + G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-                    for (double y = _start - _step; y >= yi; y -= _step) {
-                        newTick = new Line(xi + G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                        newTick->setStrokeWeight(_stroke_weight);
-                        _ticks->push_back(newTick);
-                    }
-
-                    if (_half_ticks) {
-                        for (double y = _start + 0.5*_step; y <= yf; y += _step) {
-                            newTick = new Line(xi + 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                    if (_ticks_to_left) {
+                        for (double y = start; y <= yf; y += step) {
+                            newTick = new Line(xi - G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
                         }
-                        for (double y = _start - 0.5*_step; y >= yi; y -= _step) {
-                            newTick = new Line(xi + 0.5*G->xpos(G->jIdx(0) + _tick_size), y, xi, y, _color);
-                            newTick->setStrokeWeight(_stroke_weight);
+                        for (double y = start - step; y >= yi; y -= step) {
+                            newTick = new Line(xi - G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                            newTick->strokeWeight(_stroke_weight);
                             _ticks->push_back(newTick);
+                        }
+
+                        if (_half_ticks) {
+                            for (double y = start + 0.5*step; y <= yf; y += step) {
+                                newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                            for (double y = start - 0.5*step; y >= yi; y -= step) {
+                                newTick = new Line(xi - 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                        }
+                    } else {
+                        for (double y = start; y <= yf; y += step) {
+                            newTick = new Line(xi + G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                            newTick->strokeWeight(_stroke_weight);
+                            _ticks->push_back(newTick);
+                        }
+                        for (double y = start - step; y >= yi; y -= step) {
+                            newTick = new Line(xi + G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                            newTick->strokeWeight(_stroke_weight);
+                            _ticks->push_back(newTick);
+                        }
+
+                        if (_half_ticks) {
+                            for (double y = start + 0.5*step; y <= yf; y += step) {
+                                newTick = new Line(xi + 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
+                            for (double y = start - 0.5*step; y >= yi; y -= step) {
+                                newTick = new Line(xi + 0.5*G->xpos(G->jIdx(0) + tick_size), y, xi, y, _color);
+                                newTick->strokeWeight(_stroke_weight);
+                                _ticks->push_back(newTick);
+                            }
                         }
                     }
                 }
@@ -356,7 +435,7 @@ void Axis::draw(Graph* G, cv::Mat* original) {
 
     delete _arrow;
     _arrow = new Arrow(xi, yi, xf, yf, _color);
-    _arrow->setStrokeWeight(_stroke_weight).setHeadSize(_draw_head ? _head_size : 0).setAngle(_head_angle);
+    _arrow->strokeWeight(_stroke_weight).headSize(_draw_head ? _head_size : 0).angle(_head_angle);
     _arrow->draw(G, original);
 
     for (std::list<Line*>::iterator iter = _ticks->begin(); iter != _ticks->end(); iter++) {

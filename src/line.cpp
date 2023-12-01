@@ -105,54 +105,54 @@ void Line::draw(Graph* G, cv::Mat* original) {
 	}
 }
 
-void Line::setXa(double xa) {
+void Line::xa(double xa) {
 	_xa = xa;
 }
 
-double Line::xa() {
+double Line::getxa() {
 	return _xa;
 }
 
-void Line::setYa(double ya) {
+void Line::ya(double ya) {
 	_ya = ya;
 }
 
-double Line::ya() {
+double Line::getya() {
 	return _ya;
 }
 
-void Line::setXb(double xb) {
+void Line::xb(double xb) {
 	_xb = xb;
 }
 
-double Line::xb() {
+double Line::getxb() {
 	return _xb;
 }
 
-void Line::setYb(double yb) {
+void Line::yb(double yb) {
 	_yb = yb;
 }
 
-double Line::yb() {
+double Line::getyb() {
 	return _yb;
 }
 
-Line& Line::setStrokeWeight(double stroke_weight) {
+Line& Line::strokeWeight(double stroke_weight) {
 	_stroke_weight = stroke_weight;
 
 	return *this;
 }
 
-double Line::strokeWeight() {
+double Line::getStrokeWeight() {
 	return _stroke_weight;
 }
 
-Line& Line::setColor(cv::Vec3b color) {
+Line& Line::color(cv::Vec3b color) {
 	_color = color;
 
 	return *this;
 }
 
-cv::Vec3b Line::color() {
+cv::Vec3b Line::getColor() {
 	return _color;
 }
