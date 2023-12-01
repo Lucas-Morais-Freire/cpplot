@@ -221,20 +221,34 @@ void Axis::draw(Graph* G, cv::Mat* original) {
                     number_size = _number_size;
                 }
                 if (_number_offset == -HUGE_VAL) {
-                    number_offset = tick_size/2 + 1;
+                    number_offset = tick_size + 1;
                 } else {
                     number_offset = _number_offset;
                 }
 
                 cv::Point pt;
-                pt.y = (int)(G->iIdx(yi) < 0 ? 0 : (G->iIdx(yi) >= canvas->rows ? canvas->rows - 1 : G->iIdx(yi)));
+                cv::Size2i size;
+                cv::String s;
+                int aux = (int)(G->iIdx(yi) + number_offset);
                 for (double x = start; x <= xf; x += step) {
                     pt.x = (int)(G->jIdx(x));
-                    cv::putText(*canvas, cv::String(cv::format("%.0f", x)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                    s = cv::format("%.0f", x);
+
+                    size = cv::getTextSize(s, cv::FONT_HERSHEY_SIMPLEX, number_size, 2, nullptr);
+                    pt.x -= size.width/2;
+                    pt.y = aux + size.height - 1;
+
+                    cv::putText(*canvas, s, pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color, 2, 8, false);
                 }
                 for (double x = start - step; x >= xi; x -= step) {
                     pt.x = (int)(G->jIdx(x));
-                    cv::putText(*canvas, cv::String(cv::format("%.0f", x)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                    s = cv::format("%.0f", x);
+        
+                    size = cv::getTextSize(s, cv::FONT_HERSHEY_SIMPLEX, number_size, 2, nullptr);
+                    pt.x -= size.width/2;
+                    pt.y = aux + size.height - 1;
+
+                    cv::putText(*canvas, s, pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color, 2, 8, false);
                 }
             }
 
@@ -336,20 +350,34 @@ void Axis::draw(Graph* G, cv::Mat* original) {
                     number_size = _number_size;
                 }
                 if (_number_offset == -HUGE_VAL) {
-                    number_offset = tick_size/2 + 1;
+                    number_offset = tick_size + 1;
                 } else {
                     number_offset = _number_offset;
                 }
 
                 cv::Point pt;
-                pt.x = (int)(G->jIdx(xi) < 0 ? 0 : (G->jIdx(xi) >= canvas->cols ? canvas->cols - 1 : G->jIdx(xi)));
+                cv::Size2i size;
+                cv::String s;
+                int aux = (int)(G->jIdx(xi) - number_offset);
                 for (double y = start; y <= yf; y += step) {
                     pt.y = (int)(G->iIdx(y));
-                    cv::putText(*canvas, cv::String(cv::format("%.0f", y)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                    s = cv::format("%.1f", y);
+
+                    size = cv::getTextSize(s, cv::FONT_HERSHEY_SIMPLEX, number_size, 2, nullptr);
+                    pt.x = aux - size.width + 1;
+                    pt.y += size.height/2;
+
+                    cv::putText(*canvas, s, pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color, 2, 8, false);
                 }
                 for (double y = start - step; y >= yi; y -= step) {
                     pt.y = (int)(G->iIdx(y));
-                    cv::putText(*canvas, cv::String(cv::format("%.0f", y)), pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color);
+                    s = cv::format("%.1f", y);
+
+                    size = cv::getTextSize(s, cv::FONT_HERSHEY_SIMPLEX, number_size, 2, nullptr);
+                    pt.x = aux - size.width + 1;
+                    pt.y += size.height/2;
+
+                    cv::putText(*canvas, s, pt, cv::FONT_HERSHEY_SIMPLEX, number_size, this->_color, 2, 8, false);
                 }
             }
 
